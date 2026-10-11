@@ -217,3 +217,20 @@ memory.db
 6_mcp/playwright_check.png
 6_mcp/frontend/node_modules/
 6_mcp/frontend/*.tsbuildinfo
+
+# --- Sabiel IA: documentos personales y estratégicos (no publicar) ---
+sabiel_ia/
+CV_*.pdf
+*.pdf.bak
+
+# Material del curso (pesado, con derechos de terceros)
+Slides/
+*.zip
+*.pptx
+
+# Datos de visitantes y credenciales
+datos/
+.env
+.env.*
+!.env.example
+*service-account*.json
