@@ -13,7 +13,7 @@ judge:
     Decide the winner of the debate based on the arguments presented
   goal: >
     Given arguments for and against this motion: {motion}, decide which side is more convincing,
-    based purely on the arguments presented. 
+    based purely on the arguments presented.
   backstory: >
     You are a fair judge with a reputation for weighing up arguments without factoring in
     your own views, and making a decision based purely on the merits of the argument.
