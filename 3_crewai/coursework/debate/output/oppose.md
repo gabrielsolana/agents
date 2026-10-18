@@ -1,19 +1,15 @@
-**Argumento en contra de la moción**
+**Postura en contra: la lealtad es más importante que la amistad**
 
 Señoras y señores del jurado:
 
-La moción afirma dos cosas: que el Real Madrid es un equipo "menor" y que "no ganará nada". Basta demostrar que una de ellas es falsa para que caiga entera. Y las dos lo son.
+**1. La amistad es un sentimiento; la lealtad es lo que lo hace durar.** La amistad florece cuando es fácil: hay cariño, risas y afinidad. Pero los afectos cambian, y la amistad que solo depende de ellos se rompe con la primera dificultad. Lo que sostiene un vínculo cuando el sentimiento flaquea es la lealtad. Sin ella, la amistad es pasajera, y una amistad que no perdura no cumple su función.
 
-**1. "Menor" es una palabra que los hechos desmienten.** El Madrid tiene catorce Copas de Europa, más que nadie, y ganó seis de las últimas doce ediciones. Esto no es historia lejana, es dominio reciente. Un equipo menor no gana la competición más difícil del mundo una y otra vez. Mi rival dice que los títulos están en el museo, pero ese palmarés es la prueba de que el club sabe ganar de forma sostenida, año tras año.
+**2. La lealtad se prueba cuando cuesta; la amistad, cuando agrada.** Cualquiera es amigo en los buenos tiempos. La lealtad se demuestra cuando defender al otro nos sale caro. Por eso no admiramos al amigo simpático, sino al que se queda. Es la lealtad la que da valor moral a la amistad.
 
-**2. Las "remontadas milagrosas" son competitividad, no suerte.** Una remontada puede ser casualidad una vez. Repetida durante años, contra los mejores rivales y bajo la máxima presión, es una cualidad: carácter, temple y jerarquía. Esa capacidad de resolver en los momentos decisivos es lo que separa a los campeones del resto. Llamar suerte a lo que se repite es no querer reconocer el mérito.
+**3. La lealtad es más amplia que la amistad.** No solo es leal el amigo. También lo son el hermano, el compañero de trabajo, el ciudadano con su comunidad y el que mantiene su palabra. La lealtad sostiene familias, equipos, sociedades y contratos, y la amistad solo opera en una parte de ese terreno. Lo que sostiene más relaciones y más vidas es más importante.
 
-**3. La plantilla tiene estrellas y también profundidad.** Tener figuras de talla mundial no es una debilidad, es una ventaja. Si depender de grandes jugadores fuera un defecto, también lo serían todos los campeones de la historia. Además, el Madrid combina esas estrellas con una cantera y un fondo de armario capaces de rotar, y ha demostrado una y otra vez que sabe competir con bajas.
+**4. Se objeta que la lealtad puede ser ciega, pero eso es un abuso, no su esencia.** La lealtad verdadera no es obediencia: incluye decir la verdad, corregir y negarse a hacer el mal. Por la misma lógica, la amistad también se corrompe, como en la amistad por interés o la que arrastra a un amigo al vicio. Si un posible mal uso restara valor, ambas caerían. Y lo que quedaría sería lo mismo: una lealtad fiel a lo bueno.
 
-**4. La moción exige una certeza imposible.** Afirmar que el Madrid "no ganará nada" es una predicción absoluta. El fútbol es incierto, y quien sostiene la moción tiene que demostrar que el Madrid no ganará ni la Liga, ni la Champions, ni la Copa, ni la Supercopa, ni ninguna otra competición. Mi oponente solo habla de "probabilidad alta" de fracasar, y eso es admitir que no puede probar la moción. Con varias competiciones en juego y un equipo con el mejor historial europeo, la posibilidad de ganar al menos un título es real y sólida.
+**5. Sin lealtad, la amistad no tiene garantía.** ¿De qué sirve el afecto de alguien que te abandona cuando más lo necesitas? Un amigo desleal es, en la práctica, un conocido agradable. En cambio, una persona leal sigue siendo digna de confianza aunque la cercanía se enfríe. La confianza es lo que realmente buscamos en los demás, y solo la lealtad la asegura.
 
-**5. Un equipo irregular no es un equipo menor.** Una mala racha en Liga no convierte a un club en mediocre. Quien ha demostrado que llega a los tramos decisivos en su mejor forma es siempre candidato, sobre todo en eliminatorias, donde la experiencia y la mentalidad ganadora pesan más que la regularidad de septiembre.
-
-**Conclusión:** Llamar "menor" al Madrid ignora su dominio reciente, y asegurar que "no ganará nada" es una profecía que nadie puede probar. Mientras el Madrid compita por varios títulos con el equipo que más veces ha ganado en Europa, será favorito o candidato en cada uno de ellos. Apostar contra él ha sido históricamente un mal negocio.
-
-**Voten en contra de la moción.**
+**Conclusión:** La amistad nos alegra, pero la lealtad nos sostiene. Una es el sentimiento, la otra el compromiso que lo hace fiable y duradero. Por eso la lealtad es más importante que la amistad. Gracias.
