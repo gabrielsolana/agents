@@ -2,136 +2,148 @@
 
 ---
 
-## Table of Contents
+## Sourcing and Reliability Note
 
-1. Executive Summary
-2. Scope, Sourcing, and Verification Note
-3. From AI Experimentation to AI Value Realization
-4. Agentic AI as the Dominant Enterprise Theme
-5. Interoperability Standards and Platform Architecture
-6. Governance, Risk, and Regulation
-7. Data Readiness as the Primary Bottleneck
-8. Change Management and Workforce Impact
-9. AI Economics and FinOps
-10. Evaluation, Security, and Reliability
-11. Skill Stack and Credential Path
-12. Career Paths and Market Demand
-13. Cross-Cutting Themes and Implications
-14. Recommended 12-Month Roadmap for an Aspiring Analyst
-15. Verification Checklist and Open Questions
-16. Conclusion
+This report was compiled **without live web access**. It draws on training knowledge of industry reports, regulations, and market commentary through roughly **late 2025**, so some of it may be out of date.
+
+- Statistics are **paraphrased and approximate**. Verify them against primary sources before citing them in client or executive materials.
+- **Regulatory dates are in flux**, especially under the EU AI Act and US state laws. Treat every date here as "last known" and confirm it.
+- **Compensation and job-market information is thin** and varies widely by region, seniority, and employer type.
+- A consolidated verification checklist appears in Section 13.
 
 ---
 
-## 1. Executive Summary
+## Executive Summary
 
-By 2026, the enterprise AI transformation analyst is no longer a scribe of pilot ideas. The role is now accountable for turning AI investment into **measurable, governed, and adopted business outcomes**. Ten findings define the landscape:
+The enterprise AI transformation analyst role in 2026 is defined by a shift from **enthusiasm to accountability**. Most large organizations have run AI pilots, but far fewer have turned them into measurable financial results. Analysts are hired to close that gap by connecting AI use cases to business KPIs, building defensible business cases, managing risk and compliance, and ensuring that employees adopt what gets built.
 
-1. **Value realization has replaced experimentation.** Boards and CFOs expect P&L evidence, which requires pre-deployment baselines and post-deployment benefit tracking.
-2. **Agentic AI is the dominant theme.** Semi-autonomous agents are being embedded in customer service, IT operations, procurement, finance, and software delivery. Many projects are expected to fail on cost, unclear value, or weak controls, so realistic scoping is a differentiator.
-3. **Interoperability standards (MCP, A2A, and others) are shaping architecture.** Analysts must understand lock-in, integration effort, and security trade-offs across major platforms.
-4. **Governance and regulation are core competencies.** The EU AI Act's high-risk obligations are scheduled for August 2026 (with possible delay), US rules are a state-level patchwork, and frameworks such as NIST AI RMF and ISO/IEC 42001 are practical tools.
-5. **Data readiness is still the biggest bottleneck**, more than model quality.
-6. **Change management matters as much as technology.** Adoption, not deployment, is the typical failure point.
-7. **AI economics and FinOps are a distinct discipline.** Unit costs are falling, but total spend often climbs.
-8. **Evaluation, security, and reliability are analyst-level concerns**, covering hallucination, prompt injection, data leakage, and over-permissioned agents.
-9. **A practical skill stack and credential path exists**, but a portfolio of real work outweighs certificates.
-10. **Careers are expanding but specializing.** Domain depth and proven outcomes beat generic "AI enthusiast" profiles.
+The ten main findings:
 
-The overarching conclusion is that the 2026 analyst is a **translator and accountability layer** between executives, engineers, finance, risk, and the workforce.
-
----
-
-## 2. Scope, Sourcing, and Verification Note
-
-**Sourcing limitation.** This report was prepared without live web access. It synthesizes developments known through training data plus announced timelines. Items marked *(verify)* are figures, dates, or claims that may have changed and should be checked against current primary sources before being cited externally.
-
-**How to read this report.**
-- Sections 3–12 expand each key finding into a full topic area with context, practical implications, frameworks, and analyst actions.
-- Section 13 draws out cross-cutting themes.
-- Sections 14–15 provide a roadmap and a verification checklist.
-- Where I add illustrative frameworks, templates, or examples, they are professional-practice suggestions, not claims about specific studies or statistics.
+1. **Role identity:** The role is a "value and risk realist," not an AI evangelist.
+2. **Agentic AI:** Agents are the dominant 2026 theme, and expectations are being corrected by cancellations and cost overruns.
+3. **Interoperability:** Standards such as MCP and A2A, along with platform agent offerings, now shape architecture and vendor-lock-in decisions.
+4. **Governance and regulation:** The EU AI Act, a US state-law patchwork, and frameworks such as NIST AI RMF and ISO/IEC 42001 are core job content.
+5. **Data readiness:** Data quality, ownership, and access controls are the most common bottleneck.
+6. **Evaluation, observability, and economics:** Evals, monitoring, and AI FinOps are rising must-have skills.
+7. **Skill profile:** The analyst is a hybrid of business, technical-literate, and change-management skills, and change management is often the deciding factor.
+8. **Credentials:** Certifications help, but demonstrable work products matter most.
+9. **Titles and entry routes:** Many titles and many on-ramps exist, from analyst upskilling to consulting to audit and compliance.
+10. **Differentiators:** Sector depth, quantified outcomes, and responsible-AI credibility set strong candidates apart.
 
 ---
 
-## 3. From AI Experimentation to AI Value Realization
+## 1. The Role Has Shifted from "AI Evangelist" to "Value and Risk Realist"
 
-### 3.1 What changed
+### 1.1 Context: Past the Experimentation Phase
 
-- **2023–2024: the experimentation era.** Generative AI surged after ChatGPT's launch. Analysts mostly scoped pilots, assembled long use-case lists, ran proofs of concept, and facilitated ideation workshops. Success was often measured by activity (number of pilots, licenses purchased, employees trained) rather than outcomes.
-- **2025–2026: the value realization era.** Budgets that were once "innovation funds" are now scrutinized as operating and capital expenditure. Boards and CFOs ask what has changed on the P&L: cost-to-serve, cycle time, revenue lift, error rates, or risk exposure.
+In 2023–2024, many enterprises funded broad experimentation with generative AI: chatbots, copilots, proofs of concept, and innovation labs. By 2025–2026, boards and CFOs expect return. The central question is no longer "What can AI do?" but **"What has AI delivered, and what will it deliver next quarter?"**
 
-### 3.2 External pressure driving scrutiny
+### 1.2 Evidence Base
 
-Widely circulated studies and commentary have intensified the pressure. A prominent example is the **2025 MIT NANDA report**, which claimed that most generative AI pilots show no measurable return *(verify; the methodology and sample were debated, and the report should be cited cautiously, if at all, without reading the primary source)*. Whatever its precision, the narrative it popularized, that many pilots never reach production value, now shapes executive expectations and funding discipline.
-
-### 3.3 The analyst's core job
-
-The analyst connects AI initiatives to business outcomes. In practice this means:
-
-1. **Outcome definition.** Translate vague ambitions ("improve productivity") into specific, measurable value drivers.
-2. **Baseline creation before deployment.** Without a baseline, benefits cannot be proven. Capture current volumes, handle times, error rates, backlog, cost per transaction, and customer or employee satisfaction.
-3. **Benefit tracking after deployment.** Measure against the baseline over time, separating AI effects from seasonality, headcount changes, and other initiatives.
-4. **Benefit realization governance.** Assign named owners for each benefit, incorporate benefits into budgets and targets, and review regularly.
-5. **Portfolio management.** Stop, scale, or redesign initiatives based on evidence.
-
-### 3.4 Value driver taxonomy
-
-| Value category | Example metrics | Typical AI examples |
+| Source | Approximate finding (paraphrased) | Implication for analysts |
 |---|---|---|
-| Cost-to-serve | Cost per ticket, per invoice, per claim | Customer-service deflection, invoice processing |
-| Cycle time | Time to close, onboarding, resolution, quote | Finance close acceleration, contract review |
-| Revenue lift | Conversion, upsell, retention, win rate | Sales assistance, personalization |
-| Risk reduction | Error rates, compliance incidents, fraud losses | Monitoring, policy checks, anomaly detection |
-| Quality | Rework rate, first-time-right, customer satisfaction | Drafting, QA assistance, code review |
-| Capacity | Hours freed and *redeployed* | Knowledge-worker assistance |
+| **McKinsey, *State of AI* (2025)** | Most large organizations use AI in at least one business function, but only about a third are scaling it across the enterprise, and a minority report meaningful enterprise-level EBIT impact. | Adoption is broad but value capture is narrow. Scaling is the scarce capability. |
+| **MIT NANDA, *GenAI Divide* (2025)** | Claimed that the large majority of gen-AI pilots show no measurable P&L impact. Methodology drew criticism, but the headline resonated. | Treat the figure as directional. The pilot-to-production gap is real. |
+| **Gartner (various)** | Has predicted significant abandonment of gen-AI projects after proof of concept, citing poor data quality, inadequate risk controls, escalating costs, and unclear business value. | The same four failure causes recur, so analysts can screen for them early. |
 
-**Important distinction:** "hours saved" is not value until it is converted into either reduced cost, avoided hiring, or additional revenue-generating output. Analysts must be explicit about whether benefits are **cashable**, **capacity-releasing** (non-cashable), or **strategic**.
+*Verify exact percentages against the original publications.*
 
-### 3.5 Practical methods
+### 1.3 What Analysts Are Hired to Do
 
-- **Baseline and control design:** Where possible, use A/B groups, phased rollouts, or matched cohorts to isolate impact.
-- **Benefits register:** A single document listing each benefit, owner, metric, baseline, target, measurement method, and realization date.
-- **Leading and lagging indicators:** Adoption and quality (leading) predict financial results (lagging).
-- **Stage-gate funding:** Release funds progressively as pilots clear evidence thresholds.
-- **Total value and total cost view:** Pair benefits with the full cost stack (see Section 9).
+- **Close the pilot-to-production gap.** Diagnose why pilots stall (data, integration, adoption, ownership, funding) and design the path to production.
+- **Tie use cases to business KPIs.** Translate "we built a chatbot" into "we reduced average handle time by X% and cost per contact by Y."
+- **Build business cases.** Model benefits (labor, throughput, quality, revenue) against full costs (licenses, inference, integration, governance, change management, ongoing support).
+- **Kill weak projects.** Apply stage gates and stop work that lacks measurable value, data access, or risk acceptability. Stopping a project is a legitimate and valued outcome.
+- **Prioritize the portfolio.** Rank use cases by value, feasibility, risk, and strategic fit.
+- **Communicate honestly.** Give executives realistic expectations, including uncertainty ranges and failure modes.
 
-### 3.6 Common pitfalls
+### 1.4 Typical Operating Rhythm
 
-- Counting gross time savings as financial savings.
-- Starting a pilot without a baseline, then trying to reconstruct one afterward.
-- Measuring usage (logins, prompts) rather than outcomes.
-- Attributing results to AI when process changes were responsible.
-- Ignoring downstream effects, such as faster drafting that creates review bottlenecks.
-- "Pilot purgatory": successful demos that never get production funding, ownership, or integration.
+1. **Intake:** Collect and normalize use-case ideas from business units.
+2. **Triage:** Score them on value, feasibility, data readiness, and risk tier.
+3. **Business case:** Establish a baseline, then model benefits and costs.
+4. **Pilot design:** Define success metrics, evaluation methods, and exit criteria *before* building.
+5. **Stage gate:** Decide to scale, iterate, or stop.
+6. **Scale and adoption:** Support rollout, training, and process redesign.
+7. **Post-implementation review:** Measure realized versus forecast value and feed the results back into the next round of prioritization.
 
-### 3.7 Implications for the analyst
+### 1.5 Key Takeaway
 
-The credible 2026 analyst brings finance fluency (NPV, payback, unit economics), operations measurement skills, and the willingness to report disappointing results honestly. Being the person who can say "this pilot didn't pay back, and here is why" is increasingly valued.
+Credibility comes from **numbers, baselines, and willingness to say no**. An analyst who can show that three of ten proposed projects should be stopped, with evidence, is often more valuable than one who finds ten new ideas.
 
 ---
 
-## 4. Agentic AI as the Dominant Enterprise Theme
+## 2. Agentic AI: The Dominant 2026 Theme, With a Hype Correction
 
-### 4.1 Shift from assistants to agents
+### 2.1 From Copilots to Agents
 
-Enterprises are moving from **chat assistants** (a human asks, the model answers) to **semi-autonomous agents** that plan, call tools, access systems, and execute multi-step tasks within workflows. Common target domains include:
+| Generation | Description | Typical examples |
+|---|---|---|
+| **Chatbots / assistants** | Answer questions, usually from a knowledge base. | Internal HR or IT FAQ bots |
+| **Copilots** | Assist a human inside an application, with the human in control. | Code completion, email drafting, document summarization |
+| **Agents** | Plan and execute multi-step tasks, call tools and systems, and take actions inside workflows with varying autonomy. | Resolving a support ticket end to end, reconciling invoices, triaging and remediating IT incidents |
 
-- **Customer service:** triage, resolution, refunds, case summarization, follow-up.
-- **IT operations:** incident triage, access requests, runbook execution, ticket routing.
-- **Procurement:** supplier queries, requisition processing, contract comparison, three-way matching.
-- **Finance close and accounting:** reconciliations, variance explanation, journal-entry preparation, accrual support.
-- **Software delivery:** code generation, test generation, code review, migration, documentation.
-- Additional areas: HR service delivery, sales operations, legal intake, claims processing, supply chain exception handling.
+Priority domains include **customer service, IT operations, finance (close, reconciliation, collections), procurement, HR operations, and software delivery**.
 
-### 4.2 The expectation gap and failure risk
+### 2.2 The Hype Correction
 
-Gartner has predicted that **over 40% of agentic AI projects will be cancelled by the end of 2027** due to escalating costs, unclear business value, or inadequate risk controls *(verify exact wording and figure)*. The same era has seen "agent washing," where vendors rebrand basic automation or chatbots as agents. Realistic scoping is therefore a key analyst skill.
+Gartner has predicted that **over 40% of agentic AI projects will be cancelled by the end of 2027**, citing escalating costs, unclear business value, and inadequate risk controls. Gartner has also highlighted "agent washing," where vendors rebrand chatbots, RPA, or simple automation as agents.
 
-### 4.3 What the analyst does
+Practical challenges behind the correction:
 
-1. **Process mapping for agent suitability.** Evaluate candidate processes using criteria such as:
-   - Volume and repeatability
-   - Clarity of rules and success criteria
-   - Availability and quality of data and system access (APIs vs. screen-only)
-   - Tolerance for error and cost of
+- **Compounding errors:** Each step in a multi-step chain can fail, so end-to-end reliability can fall well below single-step accuracy.
+- **Cost unpredictability:** Agents loop, retry, and call tools repeatedly, which raises token and compute consumption.
+- **Integration friction:** Legacy systems often lack clean APIs, so agents depend on brittle UI automation.
+- **Security exposure:** Agents with permissions can be manipulated through prompt injection or tool misuse.
+- **Accountability gaps:** It is often unclear who owns an agent's decision.
+- **Change resistance:** Employees may distrust or work around agent outputs.
+
+### 2.3 Analyst Responsibilities
+
+**a) Assess process suitability.** Agents tend to fit processes that are:
+- High-volume and repetitive, but with some variability that rule-based automation cannot handle
+- Well-documented, with clear policies and decision criteria
+- Backed by accessible systems and data (APIs, permissions)
+- Tolerant of occasional errors, or protected by reliable checkpoints
+- Measurable, with clear cycle-time, accuracy, and cost baselines
+
+They tend to fit poorly when:
+- Decisions are high-stakes or irreversible (large payments, medical decisions) without strong oversight
+- Processes are undocumented or depend on tacit knowledge
+- Systems are inaccessible or the data is poor
+- Regulation requires explainable, deterministic outcomes
+
+**b) Define human-in-the-loop checkpoints.** Specify:
+- Which actions require **approval** (for example, payments above a threshold, customer-facing communications, record deletions)
+- Which actions need **sampling and review** (quality assurance)
+- **Escalation triggers** (low confidence, anomalies, policy conflicts)
+- **Override and rollback** mechanisms
+- **Audit trails** capturing prompts, tool calls, and decisions
+
+**c) Separate real agents from agent-washed automation.** Questions to ask vendors:
+- Does the system plan dynamically, or follow a fixed script?
+- What tools and systems can it act on, and with what permissions?
+- How are errors detected, logged, and recovered from?
+- What evaluation evidence exists on real tasks, not demos?
+- What is the all-in cost per completed task?
+
+**d) Right-size autonomy.** Use a staged autonomy ladder:
+1. Suggest only
+2. Draft for human approval
+3. Act with post-hoc review
+4. Act autonomously within guardrails
+
+### 2.4 Agent Use-Case Screening Template
+
+| Criterion | Questions | Score (1–5) |
+|---|---|---|
+| Value | Is the baseline cost or cycle time large enough to matter? | |
+| Feasibility | Are systems, APIs, and data accessible? | |
+| Reliability need | What is the cost of an error? | |
+| Risk tier | Does regulation or policy constrain autonomy? | |
+| Oversight design | Are checkpoints defined and staffed? | |
+| Adoption | Will the process owner and staff support it? | |
+
+### 2.5 Key Takeaway
+
+Analysts add the most value by **matching autonomy to ris

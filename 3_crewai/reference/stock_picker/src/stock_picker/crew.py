@@ -6,6 +6,7 @@ from crewai_tools import SerperDevTool
 from .tools.push_tool import send_push_notification
 
 
+
 class TrendingCompany(BaseModel):
     """ A company that is in the news and attracting attention """
     name: str = Field(description="Company name")
@@ -85,7 +86,7 @@ class StockPicker():
             tasks=self.tasks, 
             process=Process.hierarchical,
             verbose=True,
-            memory=True,
+            # memory=True,
             tracing=True,
             manager_agent=manager
         )

@@ -1,50 +1,23 @@
-After reviewing the research findings, I would choose **TSMC** as the best company for investment.
+Chosen company: **Broadcom**
 
-## Why TSMC was chosen
+Why Broadcom was chosen:
+- **Best overall risk/reward profile**: Among the three companies, Broadcom offers the strongest combination of growth, durability, and cash generation.
+- **Direct exposure to AI infrastructure**: Broadcom sits in the “plumbing” of AI expansion through networking, interconnects, and custom silicon, which are essential as AI clusters scale.
+- **Recurring software revenue**: Unlike pure hardware-heavy peers, Broadcom also has a meaningful infrastructure software business that adds stable, recurring cash flow and improves earnings resilience.
+- **Strategic positioning with hyperscalers**: Broadcom is deeply embedded with large cloud customers that need high-performance networking and custom chips, giving it a central role in AI buildouts.
+- **More balanced than the alternatives**: It has clearer multi-layer exposure to AI than Oracle and a more durable, diversified business mix than AMD.
 
-TSMC stands out as the strongest overall investment choice because it combines:
+Why the other companies were not selected:
 
-- **A dominant market position**: It is the leading global foundry and sits at the center of the semiconductor supply chain.
-- **Direct exposure to AI growth**: It benefits from rising demand for advanced AI chips and is a critical manufacturing partner for many of the world’s most important chip designers.
-- **Strong future outlook**: The company expects **more than 30% sales growth in 2026**, which signals durable demand and strong execution momentum.
-- **High-quality long-term moat**: Its manufacturing scale, technological leadership, and customer diversification make it one of the most defensible ways to invest in the AI infrastructure buildout.
+1. **Oracle**
+   - **What is strong**: Oracle has a compelling database moat, sticky enterprise relationships, and growing OCI momentum, especially around AI workloads and regulated enterprise customers.
+   - **Why it was not selected**: The AI infrastructure opportunity is attractive, but Oracle is still more execution-dependent and capital-intensive. Its upside is promising, yet its AI thesis is more concentrated on cloud capacity expansion and backlog conversion, which makes it less attractive on a risk-adjusted basis than Broadcom.
+   - **Main drawback**: Heavy execution requirements and competitive pressure from much larger cloud providers.
 
-TSMC is especially attractive because it gives investors exposure to AI growth without relying on a single product cycle or a narrow customer story. It is a foundational business in the AI ecosystem, which makes its earnings base more resilient than many higher-beta AI names.
+2. **Advanced Micro Devices (AMD)**
+   - **What is strong**: AMD has a solid competitive position in CPUs and is gaining traction in AI accelerators, with meaningful upside if Instinct adoption scales.
+   - **Why it was not selected**: AMD’s AI accelerator opportunity is still less proven, and it faces the toughest competition profile of the three due to NVIDIA’s entrenched ecosystem. The path to monetization is likely more volatile and less predictable.
+   - **Main drawback**: Higher execution risk and a more uncertain software/ecosystem adoption curve.
 
-## Why the other companies were not selected
-
-### Broadcom
-Broadcom is a strong AI beneficiary and has impressive AI semiconductor growth, but I did not choose it because:
-- Much of the AI optimism may already be reflected in the stock after a major run-up.
-- It faces valuation risk and margin pressure.
-- It is compelling, but less attractive than TSMC on a risk-adjusted basis.
-
-### AMD
-AMD has an appealing growth story and real upside in AI and data center computing, but it was not selected because:
-- It faces stronger competitive pressure from larger rivals.
-- Its AI opportunity is promising, but still more execution-dependent.
-- It is a higher-volatility choice than TSMC.
-
-### Cerebras
-Cerebras was not selected because:
-- It is still early in its public-market journey.
-- It has far less proven financial and commercial scale than the established leaders.
-- The stock carries substantial execution and valuation risk.
-
-### Arm Holdings
-Arm is interesting because of its dominant architecture role and potential expansion into AI chips, but it was not selected because:
-- Its new AI chip strategy is still unproven.
-- Moving deeper into hardware adds execution complexity.
-- The investment case is strong, but more speculative than TSMC’s.
-
-### Samsung Electronics
-Samsung is well positioned in AI memory, but it was not selected because:
-- Its business is less focused than TSMC’s pure AI infrastructure exposure.
-- Memory markets are historically cyclical.
-- Although it has upside, the risk profile is less attractive than TSMC’s combination of leadership and demand visibility.
-
-## Final decision
-
-**Selected company: TSMC**
-
-**Reason:** It offers the best combination of AI exposure, industry leadership, durable competitive advantage, and visible long-term growth, while avoiding some of the valuation and execution risks that affect the other candidates.
+Conclusion:
+- **Broadcom is the best investment choice** because it combines AI infrastructure exposure, software recurring revenue, and a strong strategic position in hyperscale buildouts, creating the best balance of growth and durability among the options.
