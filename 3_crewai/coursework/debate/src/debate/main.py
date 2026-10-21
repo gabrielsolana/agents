@@ -2,7 +2,6 @@
 import sys
 import warnings
 
-from datetime import datetime
 
 from debate.crew import Debate
 
@@ -33,8 +32,7 @@ def train():
     Train the crew for a given number of iterations.
     """
     inputs = {
-        "topic": "AI LLMs",
-        'current_year': str(datetime.now().year)
+        "motion": "There needs to be strict laws to regulate LLMs",
     }
     try:
         Debate().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
@@ -57,8 +55,7 @@ def test():
     Test the crew execution and returns the results.
     """
     inputs = {
-        "topic": "AI LLMs",
-        "current_year": str(datetime.now().year)
+        "motion": "There needs to be strict laws to regulate LLMs",
     }
 
     try:
@@ -83,8 +80,7 @@ def run_with_trigger():
 
     inputs = {
         "crewai_trigger_payload": trigger_payload,
-        "topic": "",
-        "current_year": ""
+        "motion": trigger_payload.get("motion", ""),
     }
 
     try:
