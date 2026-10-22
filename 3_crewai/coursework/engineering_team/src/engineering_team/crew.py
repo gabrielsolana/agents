@@ -1,10 +1,16 @@
-from crewai import Agent, Crew, Process, Task
+from crewai import Agent, Crew, LLM, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from .tools.sandbox_tools import sandbox_tools
 # If you want to run a snippet of code before or after the crew starts,
 # you can use the @before_kickoff and @after_kickoff decorators
 # https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
+
+# Anthropic's default max_tokens is too low for the long design/code outputs and yields
+# empty responses ("Invalid response from LLM call - None or empty").
+def _llm(model: str = "anthropic/claude-sonnet-5-5") -> LLM:
+    return LLM(model=model, max_tokens=64000)
+
 
 @CrewBase
 class EngineeringTeam():
@@ -17,6 +23,7 @@ class EngineeringTeam():
     def engineering_lead(self) -> Agent:
         return Agent(
             config=self.agents_config['engineering_lead'],
+            llm=_llm("anthropic/claude-opus-5-5"),
             verbose=True,
             mcps=["https://mcp.context7.com/mcp"]
         )
@@ -25,6 +32,7 @@ class EngineeringTeam():
     def backend_engineer(self) -> Agent:
         return Agent(
             config=self.agents_config['backend_engineer'],
+            llm=_llm(),
             verbose=True,
             tools=sandbox_tools
         )
@@ -33,6 +41,7 @@ class EngineeringTeam():
     def frontend_engineer(self) -> Agent:
         return Agent(
             config=self.agents_config['frontend_engineer'],
+            llm=_llm(),
             verbose=True,
             tools=sandbox_tools,
             mcps=["https://mcp.context7.com/mcp"],
@@ -42,6 +51,7 @@ class EngineeringTeam():
     def test_engineer(self) -> Agent:
         return Agent(
             config=self.agents_config['test_engineer'],
+            llm=_llm(),
             verbose=True,
             tools=sandbox_tools
         )
@@ -77,11 +87,10 @@ class EngineeringTeam():
         # https://docs.crewai.com/concepts/knowledge#what-is-knowledge
 
         return Crew(
-            agents=self.agents, # Automatically created by the @agent decorator
+            agents=[self.backend_engineer(), self.frontend_engineer(), self.test_engineer()],
+            manager_agent=self.engineering_lead(),
             tasks=self.tasks, # Automatically created by the @task decorator
-            # process=Process.sequential,
+            process=Process.sequential,
             verbose=True,
             tracing=True,
-            process=Process.hierarchical, 
-            manager= engineering_lead
         )

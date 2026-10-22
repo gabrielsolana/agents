@@ -13,7 +13,7 @@ engineering_lead:
     Success criteria: the system is successfully built and works.
   backstory: >
     You're a seasoned engineering lead with a knack for writing clear and concise designs.
-  llm: anthropic/claude-sonnet-5-5
+  
 
 
 backend_engineer:
@@ -27,7 +27,7 @@ backend_engineer:
   backstory: >
     You're a seasoned python engineer with a knack for writing clean, efficient object-oriented code.
     You follow the design instructions carefully.
-  llm: anthropic/claude-sonnet-5-5
+  
 
 frontend_engineer:
   role: >
@@ -42,7 +42,7 @@ frontend_engineer:
   backstory: >
     You're a seasoned python engineer highly skilled at writing simple Gradio UIs for a backend class.
     You produce a simple gradio UI that demonstrates the given backend class; you write the gradio UI to the sandbox.
-  llm: anthropic/claude-sonnet-5-5
+  
 
 test_engineer:
   role: >

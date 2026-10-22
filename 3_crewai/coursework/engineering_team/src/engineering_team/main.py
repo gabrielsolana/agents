@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import sys
 import warnings
-
 from datetime import datetime
 
+import engineering_team.patch  # noqa: F401 — applies CrewAI MCP monkey-patch on import
 from engineering_team.crew import EngineeringTeam
+from .tools.sandbox_tools import reset_sandbox
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -13,16 +14,32 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
 
+requirements = """
+Un sistema sencillo de gestión contable para una PYME que presta servicios de automatización con IA.
+El sistema debe permitir registrar clientes y crear proyectos o servicios para cada cliente (por ejemplo: chatbot, automatización de flujos de trabajo, desarrollo de agentes de IA, cuota mensual de mantenimiento).
+El sistema debe permitir emitir facturas a los clientes, con líneas de detalle (descripción, cantidad, precio unitario), número de factura secuencial, fecha de emisión, fecha de vencimiento e IVA aplicado.
+El sistema debe permitir registrar los cobros recibidos de una factura, admitiendo cobros parciales, y llevar el estado de cada factura (borrador, emitida, parcialmente cobrada, cobrada, vencida).
+El sistema debe permitir registrar gastos con una categoría (por ejemplo: suscripciones de software, uso de APIs de LLM, hosting en la nube, autónomos colaboradores, marketing, oficina, impuestos), una fecha, un proveedor y un importe con IVA incluido.
+El sistema debe permitir definir cargos y gastos recurrentes mensuales (por ejemplo: cuotas de mantenimiento, suscripciones SaaS) y generarlos para un mes determinado.
+El sistema debe calcular la cuenta de pérdidas y ganancias de cualquier periodo: ingresos totales, gastos totales por categoría y beneficio neto.
+El sistema debe poder informar de las cuentas por cobrar (facturas pendientes de cobro, destacando las vencidas) y del saldo de caja en cualquier momento.
+El sistema debe poder informar del saldo de IVA de un periodo (IVA repercutido en facturas menos IVA soportado deducible en gastos).
+El sistema debe poder informar de los ingresos y la rentabilidad por cliente y por proyecto, incluyendo el coste de uso de APIs de LLM asociado a cada proyecto.
+El sistema debe poder listar todas las transacciones (facturas, cobros y gastos) a lo largo del tiempo, filtradas por rango de fechas, cliente o categoría.
+El sistema debe impedir operaciones inválidas: cobrar más del importe pendiente de una factura, modificar o borrar una factura emitida (solo se puede anular mediante una factura rectificativa), importes negativos o cero, y registrar operaciones para clientes inexistentes.
+"""
+
+
 def run():
     """
     Run the crew.
     """
     inputs = {
-        'topic': 'AI LLMs',
-        'current_year': str(datetime.now().year)
+        'requirements': requirements,
     }
 
     try:
+        reset_sandbox()
         EngineeringTeam().crew().kickoff(inputs=inputs)
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
