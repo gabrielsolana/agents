@@ -130,6 +130,39 @@ def _docker_uv_run(*uv_run_args: str) -> list[str]:
     ]
 
 
+@tool("Replace In Sandbox File")
+def replace_in_sandbox_file(filename: str, old_text: str, new_text: str) -> str:
+    """
+    Edit an existing file in the sandbox by replacing one exact piece of text with another,
+    leaving the rest of the file untouched. Prefer this over rewriting a whole file when
+    changing existing code.
+
+    Args:
+        filename: The name of the file to edit (e.g. "accounting.py").
+        old_text: The exact text to replace, including indentation and line breaks. It must
+            appear exactly once in the file; include enough surrounding lines to make it unique.
+        new_text: The text that replaces it.
+    Returns:
+        A confirmation, or the reason the edit was not applied.
+    """
+    try:
+        path = _safe_path(filename)
+    except ValueError as e:
+        return str(e)
+    if not path.is_file():
+        return f"No such file in the sandbox: {filename}"
+    if not old_text:
+        return "old_text must not be empty."
+    content = path.read_text(encoding="utf-8")
+    count = content.count(old_text)
+    if count == 0:
+        return f"old_text was not found in {filename}. Read the file again and copy the text exactly."
+    if count > 1:
+        return f"old_text appears {count} times in {filename}; add surrounding lines so it is unique."
+    path.write_text(content.replace(old_text, new_text, 1), encoding="utf-8")
+    return f"Replaced 1 occurrence in {filename}."
+
+
 @tool("Run Sandbox Python File")
 def run_sandbox_python(filename: str) -> str:
     """
@@ -346,7 +379,10 @@ def check_code_quality(filename: str = "") -> str:
     return "\n".join([f"FAIL: {len(lines)} problema(s)", header, limits, *shown, *tail])
 
 
-sandbox_tools = [list_sandbox_files, read_sandbox_file, write_sandbox_file, run_sandbox_python, check_code_quality]
+sandbox_tools = [
+    list_sandbox_files, read_sandbox_file, write_sandbox_file, replace_in_sandbox_file,
+    run_sandbox_python, check_code_quality,
+]
 # Read-only view of the sandbox (+ layout inspection) for reviewers and the manual writer.
 ux_tools = [list_sandbox_files, read_sandbox_file, inspect_gradio_layout, check_code_quality]
 

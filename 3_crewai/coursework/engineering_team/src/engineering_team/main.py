@@ -5,7 +5,7 @@ from datetime import datetime
 
 import engineering_team.patch  # noqa: F401 — applies CrewAI MCP monkey-patch on import
 from engineering_team.crew import EngineeringTeam
-from .tools.sandbox_tools import reset_sandbox
+from .tools.sandbox_tools import SANDBOX_DIR, backup_sandbox, reset_sandbox
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -44,6 +44,40 @@ def run():
         EngineeringTeam().crew().kickoff(inputs=inputs)
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
+
+
+def _read_change_request(argv: list[str]) -> str:
+    """The change request comes from `--file <path>` or from the remaining arguments."""
+    if argv[:1] == ["--file"]:
+        if len(argv) < 2:
+            raise SystemExit("Uso: change --file <archivo con la petición de cambio>")
+        with open(argv[1], "r", encoding="utf-8") as fh:
+            return fh.read().strip()
+    return " ".join(argv).strip()
+
+
+def change():
+    """
+    Apply a change request to the application already in the sandbox, without rebuilding it.
+    Usage: change "texto del cambio"   |   change --file cambio.md
+    """
+    request = _read_change_request(sys.argv[1:])
+    if not request:
+        raise SystemExit('Uso: change "texto del cambio"  |  change --file cambio.md')
+    if not (SANDBOX_DIR / "app.py").is_file():
+        raise SystemExit("No hay una aplicación en el sandbox (falta app.py). Usa run_crew para construirla primero.")
+
+    backup = backup_sandbox()
+    if backup:
+        print(f"Copia del sandbox antes del cambio: {backup}")
+    inputs = {
+        "cambio": request,
+        "cambio_id": datetime.now().strftime("%Y%m%d_%H%M"),
+    }
+    try:
+        EngineeringTeam().change_crew().kickoff(inputs=inputs)
+    except Exception as e:
+        raise Exception(f"An error occurred while applying the change: {e}")
 
 
 def train():

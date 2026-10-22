@@ -1,7 +1,11 @@
 from crewai import Agent, Crew, LLM, Process, Task
-from crewai.project import CrewBase, agent, crew, task
+# `crew` is aliased: the EngineeringTeam.crew method would otherwise shadow the decorator in the class body.
+from crewai.project import CrewBase, agent, task
+from crewai.project import crew as crew_decorator
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from .tools.sandbox_tools import sandbox_tools, ux_tools
+from .tools.sandbox_tools import (
+    replace_in_sandbox_file, sandbox_tools, ux_tools, write_sandbox_file,
+)
 from .tools.cost_tools import cost_tools, mark_start, mark_task_done, register_crew
 # If you want to run a snippet of code before or after the crew starts,
 # you can use the @before_kickoff and @after_kickoff decorators
@@ -95,7 +99,7 @@ class EngineeringTeam():
             config=self.agents_config['manual_writer'],
             llm=_llm(),
             verbose=True,
-            tools=ux_tools
+            tools=ux_tools + [write_sandbox_file, replace_in_sandbox_file]
         )
 
     @task
@@ -170,19 +174,57 @@ class EngineeringTeam():
             config=self.tasks_config['cost_report_task'],
         )
 
-    @crew
-    def crew(self) -> Crew:
-        """Creates the EngineeringTeam crew"""
-        # To learn how to add knowledge sources to your crew, check out the documentation:
-        # https://docs.crewai.com/concepts/knowledge#what-is-knowledge
+    @task
+    def change_design_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['change_design_task'],
+        )
 
+    @task
+    def change_code_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['change_code_task'],
+        )
+
+    @task
+    def change_frontend_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['change_frontend_task'],
+        )
+
+    @task
+    def change_test_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['change_test_task'],
+        )
+
+    @task
+    def change_audit_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['change_audit_task'],
+        )
+
+    @task
+    def change_manual_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['change_manual_task'],
+        )
+
+    @task
+    def change_cost_report_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['change_cost_report_task'],
+        )
+
+    def _tasks(self, change: bool) -> list[Task]:
+        """The new-build pipeline excludes the change_* tasks; the change pipeline is only those."""
+        return [t for t in self.tasks if (t.name or "").startswith("change_") == change]
+
+    def _build_crew(self, agents: list[BaseAgent], change: bool) -> Crew:
         the_crew = Crew(
-            agents=[
-                self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
-                self.ux_reviewer(), self.fiscal_reviewer(), self.requirements_auditor(), self.manual_writer(),
-            ],
+            agents=agents,
             manager_agent=self.engineering_lead(),
-            tasks=self.tasks, # Automatically created by the @task decorator
+            tasks=self._tasks(change),
             process=Process.sequential,
             verbose=True,
             tracing=True,
@@ -191,3 +233,25 @@ class EngineeringTeam():
         )
         register_crew(the_crew)
         return the_crew
+
+    @crew_decorator
+    def crew(self) -> Crew:
+        """Creates the EngineeringTeam crew that builds the application from the requirements"""
+        return self._build_crew(
+            [
+                self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
+                self.ux_reviewer(), self.fiscal_reviewer(), self.requirements_auditor(), self.manual_writer(),
+            ],
+            change=False,
+        )
+
+    @crew_decorator
+    def change_crew(self) -> Crew:
+        """Creates the crew that applies a change request to the application already in the sandbox"""
+        return self._build_crew(
+            [
+                self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
+                self.requirements_auditor(), self.manual_writer(),
+            ],
+            change=True,
+        )

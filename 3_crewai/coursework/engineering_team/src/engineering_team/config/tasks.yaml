@@ -187,3 +187,109 @@ cost_report_task:
   context:
     - manual_task
   output_file: sandbox/docs/informe_coste.md
+
+change_design_task:
+  description: >
+    Se pide un CAMBIO sobre una aplicación que YA EXISTE en el sandbox; no es una aplicación nueva.
+    Petición de cambio: {cambio}
+    Antes de diseñar, lee el código existente con tus herramientas: lista los archivos, lee el/los módulo(s) del backend y app.py,
+    y docs/design.md si existe. Diseña SOLO el delta necesario para cumplir la petición:
+    qué clases, funciones o componentes se añaden o se modifican, con sus firmas. No escribas código.
+    Reglas: reutiliza lo que ya existe; no cambies firmas públicas usadas por app.py salvo que el cambio lo exija y, en ese caso,
+    indica la actualización de frontend correspondiente; no toques nada que no haga falta. Asigna el trabajo a backend_engineer,
+    frontend_engineer y test_engineer, e indica los riesgos de regresión y cómo verificar el cambio.
+  expected_output: >
+    Un documento en markdown, en español: resumen del cambio, archivos y funciones afectados (nuevos o modificados) con sus firmas,
+    asignación a cada ingeniero, riesgos de regresión y cómo verificarlo.
+  agent: engineering_lead
+  output_file: sandbox/docs/cambio_{cambio_id}_diseno.md
+
+change_code_task:
+  description: >
+    Implementa en el backend SOLO lo que el diseño del cambio te asigna. La aplicación ya existe: no la recrees.
+    Lee primero el archivo que vayas a tocar y modifícalo con la herramienta Replace In Sandbox File (no reescribas archivos enteros).
+    Después de cambiar, ejecuta las pruebas existentes (los archivos test_*.py) con run_sandbox_python; deben seguir pasando.
+    Check Code Quality puede listar problemas que ya existían antes de tu cambio: corrige los de lo que añades o modificas
+    y no refactorices lo que no tocas.
+    Petición de cambio: {cambio}
+  expected_output: >
+    Lista breve de los cambios de backend aplicados (archivo y función) y el resultado de las pruebas existentes.
+  agent: backend_engineer
+  context:
+    - change_design_task
+
+change_frontend_task:
+  description: >
+    Adapta app.py SOLO a lo que el diseño del cambio te asigna, más cualquier ajuste que exijan los cambios de backend. La interfaz ya existe: no la recrees.
+    Lee primero app.py y modifícalo con Replace In Sandbox File. Mantén la paleta, el modo claro/oscuro, el `demo` a nivel de módulo
+    y el lanzamiento únicamente bajo `if __name__ == "__main__"`. Si hace falta, amplía _validate.py (sin llamar a `.launch()`) y ejecútalo.
+    Las funciones nuevas deben cumplir los estándares (máximo 40 líneas, tipos y docstring); no refactorices lo que no tocas.
+    Petición de cambio: {cambio}
+  expected_output: >
+    Lista breve de los cambios de frontend aplicados y el resultado correcto de _validate.py.
+  agent: frontend_engineer
+  context:
+    - change_design_task
+    - change_code_task
+
+change_test_task:
+  description: >
+    Escribe pruebas unitarias (módulo `unittest`) para el comportamiento nuevo o modificado, en un archivo nuevo test_cambio_{cambio_id}.py.
+    No reescribas las pruebas existentes. Ejecuta TODAS las pruebas (cada archivo test_*.py) y corrige los defectos del backend que encuentres;
+    si cambias código del backend, mantén los estándares y comprueba que app.py sigue construyéndose con _validate.py.
+    Petición de cambio: {cambio}
+  expected_output: >
+    Un resumen en markdown de las pruebas nuevas y del resultado de la suite completa (cuántas pasan, cuántas fallan y por qué).
+  agent: test_engineer
+  context:
+    - change_design_task
+    - change_code_task
+    - change_frontend_task
+  output_file: sandbox/docs/cambio_{cambio_id}_pruebas.md
+
+change_audit_task:
+  description: >
+    Audita el cambio realizado. Comprueba (1) que la petición se cumple, citando la evidencia concreta que has visto (función, prueba o control de la interfaz),
+    (2) que no hay regresiones: ejecuta todas las pruebas y _validate.py, y (3) que Check Code Quality no empeora en lo que se ha tocado.
+    No arregles nada; solo informa, en español, empezando por lo que falte o falle.
+    Petición de cambio: {cambio}
+  expected_output: >
+    Un informe en markdown, en español: veredicto (cumplido / parcial / no cumplido), evidencia, resultado de las pruebas y de _validate.py,
+    y los problemas pendientes ordenados por gravedad.
+  agent: requirements_auditor
+  context:
+    - change_design_task
+    - change_code_task
+    - change_frontend_task
+    - change_test_task
+  output_file: sandbox/docs/cambio_{cambio_id}_auditoria.md
+
+change_manual_task:
+  description: >
+    Actualiza el manual de usuario existente (docs/manual_usuario.md) para reflejar el cambio. Léelo primero y edítalo con Replace In Sandbox File,
+    modificando o añadiendo solo las secciones afectadas; si no existe, créalo con Write Sandbox File. Cita los nombres de pestañas, botones y campos
+    exactamente y confírmalos con inspect_gradio_layout. No describas nada que no hayas comprobado.
+    Petición de cambio: {cambio}
+  expected_output: >
+    Una lista breve de las secciones del manual que se han modificado o añadido.
+  agent: manual_writer
+  context:
+    - change_design_task
+    - change_frontend_task
+
+change_cost_report_task:
+  description: >
+    Mide el gasto real de esta ejecución del cambio y redacta un informe del coste total.
+    Llama a la herramienta Report Token Usage: te da los tokens reales por agente y en total, y el coste estimado con las
+    tarifas de config/tarifas.yaml. Usa ÚNICAMENTE las cifras que devuelva la herramienta; no calcules ni inventes precios ni tokens.
+    Si algún modelo aparece como "sin tarifa", dilo claramente y no estimes su coste.
+    La herramienta también da el tiempo de reloj: por tarea, por agente y total. Incluye ese tiempo en el informe, con las mismas
+    reglas: solo las cifras de la herramienta, sin estimar nada por tu cuenta.
+  expected_output: >
+    Un informe en markdown, en español: tabla de tokens y coste por agente y total (copiada de la herramienta), qué agentes o
+    modelos concentran el gasto y en qué porcentaje, el tiempo total de la ejecución y la tabla de tiempo por tarea y por agente,
+    qué falta por contabilizar y una advertencia de que es una estimación y no la factura de Console.
+  agent: engineering_lead
+  context:
+    - change_manual_task
+  output_file: sandbox/docs/cambio_{cambio_id}_informe_coste.md
