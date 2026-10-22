@@ -577,7 +577,7 @@ def check_code_quality(filename: str = "") -> str:
 
 sandbox_tools = [
     list_sandbox_files, read_sandbox_file, outline_sandbox_file, search_sandbox, write_sandbox_file,
-    replace_in_sandbox_file, run_sandbox_python, check_code_quality,
+    replace_in_sandbox_file, run_sandbox_python, check_code_quality, inspect_gradio_layout,
 ]
 # Read-only view of the sandbox (+ layout inspection) for reviewers and the manual writer.
 ux_tools = [

@@ -22,6 +22,9 @@ def _llm(model: str = "anthropic/claude-sonnet-5-5") -> LLM:
 # Judgment-heavy roles (design, review decisions, UX critique) run on the strongest model.
 STRONG_MODEL = "anthropic/claude-fable-5-1"
 
+# Engineers apply dozens of small edits in one task (docstrings, test moves); CrewAI's default of 25 iterations cuts them short.
+ENGINEER_MAX_ITER = 40
+
 
 @CrewBase
 class EngineeringTeam():
@@ -46,6 +49,7 @@ class EngineeringTeam():
             config=self.agents_config['backend_engineer'],
             llm=_llm(),
             verbose=True,
+            max_iter=ENGINEER_MAX_ITER,
             tools=sandbox_tools
         )
     
@@ -55,6 +59,7 @@ class EngineeringTeam():
             config=self.agents_config['frontend_engineer'],
             llm=_llm(),
             verbose=True,
+            max_iter=ENGINEER_MAX_ITER,
             tools=sandbox_tools,
             mcps=["https://mcp.context7.com/mcp"],
         )
@@ -65,6 +70,7 @@ class EngineeringTeam():
             config=self.agents_config['test_engineer'],
             llm=_llm(),
             verbose=True,
+            max_iter=ENGINEER_MAX_ITER,
             tools=sandbox_tools
         )
 
