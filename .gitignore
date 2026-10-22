@@ -184,6 +184,7 @@ cython_debug/
 
 3_crewai/reference/engineering_team/sandbox/
 3_crewai/coursework/engineering_team/sandbox/
+3_crewai/coursework/engineering_team/sandbox_backups/
 
 # Ignore memory in sidekick
 memory.db-shm

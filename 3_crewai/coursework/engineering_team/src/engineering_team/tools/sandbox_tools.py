@@ -3,6 +3,7 @@ from pathlib import Path
 import base64
 import shutil
 import subprocess
+from datetime import datetime
 
 
 SANDBOX_DIR = Path(__file__).parents[3] / "sandbox"
@@ -12,8 +13,33 @@ SANDBOX_DIR.mkdir(parents=True, exist_ok=True)
 PROTECTED_FILES = {"pyproject.toml", "uv.lock", ".python-version"}
 
 
+# Previous sandboxes are copied here (outside the sandbox, git-ignored) before every reset.
+BACKUP_DIR = Path(__file__).parents[3] / "sandbox_backups"
+KEEP_BACKUPS = 5
+_NOT_WORTH_BACKING_UP = PROTECTED_FILES | {".venv", "__pycache__"}
+
+
+def backup_sandbox() -> Path | None:
+    """Copy the current sandbox to sandbox_backups/<timestamp>/ and prune old backups.
+
+    Skips .venv and __pycache__ (regenerable). Returns the backup path, or None when the
+    sandbox holds nothing but project scaffolding. Raises on failure so that the caller
+    never wipes a sandbox that could not be saved.
+    """
+    if not SANDBOX_DIR.exists() or not any(p.name not in _NOT_WORTH_BACKING_UP for p in SANDBOX_DIR.iterdir()):
+        return None
+    dest = BACKUP_DIR / datetime.now().strftime("%Y%m%d-%H%M%S")
+    shutil.copytree(SANDBOX_DIR, dest, ignore=shutil.ignore_patterns(".venv", "__pycache__"))
+    for old in sorted(p for p in BACKUP_DIR.iterdir() if p.is_dir())[:-KEEP_BACKUPS]:
+        shutil.rmtree(old)
+    return dest
+
+
 def reset_sandbox() -> None:
-    """Wipe the sandbox and re-initialize it as a fresh uv project with gradio."""
+    """Back up, then wipe the sandbox and re-initialize it as a fresh uv project with gradio."""
+    backup = backup_sandbox()
+    if backup:
+        print(f"Sandbox anterior guardado en: {backup}")
     if SANDBOX_DIR.exists():
         shutil.rmtree(SANDBOX_DIR)
     SANDBOX_DIR.mkdir(parents=True)
@@ -35,13 +61,18 @@ def _safe_path(filename: str) -> Path:
 @tool("List Sandbox Files")
 def list_sandbox_files() -> str:
     """
-    List the filenames currently in the sandbox directory.
+    List the files currently in the sandbox, including those in subfolders
+    (e.g. the markdown reports live in "docs/").
 
     Returns:
-        A newline-separated list of filenames, or a message if the
-        sandbox is empty.
+        A newline-separated list of paths relative to the sandbox, or a
+        message if the sandbox is empty.
     """
-    names = sorted(p.name for p in SANDBOX_DIR.iterdir())
+    names = sorted(
+        p.relative_to(SANDBOX_DIR).as_posix()
+        for p in SANDBOX_DIR.rglob("*")
+        if p.is_file() and not {".venv", "__pycache__"} & set(p.relative_to(SANDBOX_DIR).parts)
+    )
     return "\n".join(names) if names else "The sandbox is empty."
 
 
@@ -80,6 +111,7 @@ def write_sandbox_file(filename: str, content: str) -> str:
         path = _safe_path(filename)
     except ValueError as e:
         return str(e)
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
     return f"Wrote {len(content)} characters to {filename}."
 

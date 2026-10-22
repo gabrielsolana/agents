@@ -8,12 +8,13 @@ design_task:
     El backend_engineer debe escribir el código Python del backend.
     El frontend_engineer debe crear una aplicación gradio.
     El test_engineer debe escribir pruebas unitarias del módulo de backend.
-    Todos los ingenieros trabajarán en el mismo directorio del sandbox. No hay estructura de directorios; todos los archivos están en el mismo directorio.
+    Todos los ingenieros trabajarán en el mismo directorio del sandbox. El código (módulos, pruebas, app.py y scripts) está todo en el mismo directorio, sin subdirectorios ni paquetes.
+    Los informes en markdown (diseño, revisiones, resumen de pruebas, manual, informe de coste) se guardan solos en la subcarpeta docs/; los ingenieros no deben escribir ahí.
     Todo se ejecuta en un proyecto uv con gradio instalado.
   expected_output: >
     Un diseño detallado para cumplir los requisitos, que identifique la estructura del código y las asignaciones a los ingenieros.
   agent: engineering_lead
-  output_file: sandbox/design.md
+  output_file: sandbox/docs/design.md
 
 code_task:
   description: >
@@ -56,7 +57,7 @@ ux_review_task:
   context:
     - design_task
     - frontend_task
-  output_file: sandbox/ux_review.md
+  output_file: sandbox/docs/ux_review.md
 
 fiscal_review_task:
   description: >
@@ -70,7 +71,7 @@ fiscal_review_task:
   context:
     - design_task
     - code_task
-  output_file: sandbox/fiscal_review.md
+  output_file: sandbox/docs/fiscal_review.md
 
 requirements_audit_task:
   description: >
@@ -84,7 +85,7 @@ requirements_audit_task:
     - design_task
     - code_task
     - frontend_task
-  output_file: sandbox/requirements_audit.md
+  output_file: sandbox/docs/requirements_audit.md
 
 review_decision_task:
   description: >
@@ -102,7 +103,7 @@ review_decision_task:
     - ux_review_task
     - fiscal_review_task
     - requirements_audit_task
-  output_file: sandbox/review_decision.md
+  output_file: sandbox/docs/review_decision.md
 
 backend_fix_task:
   description: >
@@ -148,7 +149,7 @@ test_task:
   context:
     - code_task
     - design_task
-  output_file: sandbox/test_summary.md
+  output_file: sandbox/docs/test_summary.md
 
 manual_task:
   description: >
@@ -162,7 +163,7 @@ manual_task:
     - design_task
     - review_decision_task
     - test_task
-  output_file: sandbox/manual_usuario.md
+  output_file: sandbox/docs/manual_usuario.md
 
 cost_report_task:
   description: >
@@ -180,4 +181,4 @@ cost_report_task:
   agent: engineering_lead
   context:
     - manual_task
-  output_file: sandbox/informe_coste.md
+  output_file: sandbox/docs/informe_coste.md
