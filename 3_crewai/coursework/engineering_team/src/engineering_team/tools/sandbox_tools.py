@@ -7,6 +7,9 @@ import subprocess
 SANDBOX_DIR = Path(__file__).parents[3] / "sandbox"
 SANDBOX_DIR.mkdir(parents=True, exist_ok=True)
 
+# Project/build config the agents must not touch: it is only written by reset_sandbox.
+PROTECTED_FILES = {"pyproject.toml", "uv.lock", ".python-version"}
+
 
 def reset_sandbox() -> None:
     """Wipe the sandbox and re-initialize it as a fresh uv project with gradio."""
@@ -23,6 +26,8 @@ def _safe_path(filename: str) -> Path:
     p = (base / filename).resolve()
     if not p.is_relative_to(base) or p == base:
         raise ValueError(f"Path escapes the sandbox: {filename}")
+    if p.parent == base and p.name.lower() in PROTECTED_FILES:
+        raise ValueError(f"Protected file, not accessible: {filename}")
     return p
 
 
