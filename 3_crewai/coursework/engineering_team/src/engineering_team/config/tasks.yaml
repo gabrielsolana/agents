@@ -8,7 +8,7 @@ design_task:
     El backend_engineer debe escribir el código Python del backend.
     El frontend_engineer debe crear una aplicación gradio.
     El test_engineer debe escribir pruebas unitarias del módulo de backend.
-    Todos los ingenieros trabajarán en el mismo directorio del sandbox. El código (módulos, pruebas, app.py y scripts) está todo en el mismo directorio, sin subdirectorios ni paquetes.
+    Todos los ingenieros trabajarán en el mismo directorio del sandbox. Los módulos, app.py y las pruebas test_*.py están todos en la raíz del sandbox, sin paquetes; los scripts auxiliares (validación, comprobaciones, pruebas de humo, parches puntuales) se escriben en la subcarpeta scripts/ y se ejecutan con run_sandbox_python (por ejemplo scripts/_validate.py); la raíz del sandbox ya está en el PYTHONPATH, así que pueden hacer `import accounting` o `import app` sin tocar sys.path.
     Los informes en markdown (diseño, revisiones, resumen de pruebas, manual, informe de coste) se guardan solos en la subcarpeta docs/; los ingenieros no deben escribir ahí.
     Todo se ejecuta en un proyecto uv con gradio instalado.
   expected_output: >
@@ -32,7 +32,7 @@ frontend_task:
   description: >
     Escribe una interfaz gradio en un módulo app.py que muestre el código del backend, tal como se describe en el diseño.
     Supón que hay un solo usuario y que la interfaz debe ser profesional, cuidada y limpia.
-    Después escribe un script de validación independiente (p. ej. _validate.py) que importe app.py y confirme que el objeto Blocks se construye sin errores, y ejecútalo con tus herramientas del sandbox.
+    Después escribe un script de validación independiente (p. ej. scripts/_validate.py) que importe app.py y confirme que el objeto Blocks se construye sin errores, y ejecútalo con tus herramientas del sandbox.
     IMPORTANTE: el script de validación NO debe llamar a `.launch()`, porque se bloquearía hasta agotar el tiempo. Solo debe importar e instanciar.
     app.py debe exponer un `demo` a nivel de módulo y lanzarlo únicamente bajo `if __name__ == "__main__"`.
     Muestra la versión de la aplicación en la cabecera, leyéndola con `from version import __version__`; el archivo version.py lo crea y gestiona el sistema, no lo escribas ni lo edites.
@@ -90,12 +90,27 @@ requirements_audit_task:
     - frontend_task
   output_file: sandbox/docs/requirements_audit.md
 
+code_review_task:
+  description: >
+    Revisa la calidad y la mantenibilidad del código del sistema (backend, app.py y pruebas). Ejecuta primero Check Code Quality y lee el código.
+    No lo modifiques: tu informe lo recibe el líder de ingeniería, que decide qué se aplica.
+    Estos son los requisitos, para que juzgues el diseño en su contexto: {requirements}
+  expected_output: >
+    Una revisión en español, en markdown: un veredicto general breve y una lista de hallazgos ordenados por prioridad (alta / media / baja), cada uno con
+    archivo y función o clase, problema, cambio propuesto, riesgo de regresión (bajo / medio / alto) y responsable (backend_engineer o frontend_engineer).
+  agent: code_reviewer
+  context:
+    - design_task
+    - code_task
+    - frontend_task
+  output_file: sandbox/docs/code_review.md
+
 review_decision_task:
   description: >
-    Tienes tres revisiones independientes del sistema: UX, fiscal/IVA y cobertura de requisitos. Decide qué se hace.
+    Tienes cuatro revisiones independientes del sistema: UX, fiscal/IVA, cobertura de requisitos y calidad de código. Decide qué se hace.
     Lee app.py o el backend si lo necesitas para valorar la viabilidad. Para cada hallazgo, ACÉPTALO o RECHÁZALO con una razón de una línea,
     dando prioridad a los cambios que importan al usuario final o corrigen errores reales, y rechazando cuestiones de gusto, trivialidades
-    y todo lo que arriesgue romper código que funciona. Acepta como máximo 12 cambios en total. Asigna cada cambio aceptado a backend_engineer o
+    y todo lo que arriesgue romper código que funciona. Acepta una refactorización del revisor de código solo si el riesgo de regresión es bajo o hay pruebas que la protejan. Acepta como máximo 12 cambios en total. Asigna cada cambio aceptado a backend_engineer o
     frontend_engineer. Los cambios de backend no deben alterar firmas públicas de métodos usadas por app.py, salvo que el cambio incluya también
     la actualización de frontend correspondiente. No escribas código.
   expected_output: >
@@ -106,6 +121,7 @@ review_decision_task:
     - ux_review_task
     - fiscal_review_task
     - requirements_audit_task
+    - code_review_task
   output_file: sandbox/docs/review_decision.md
 
 backend_fix_task:
@@ -126,7 +142,7 @@ ux_revision_task:
   description: >
     Aplica ÚNICAMENTE los cambios asignados a frontend_engineer en la decisión de revisión del líder de ingeniería, además de cualquier actualización
     de frontend que requieran los cambios de backend. No toques nada más. Mantén la paleta de colores y el comportamiento en modo claro/oscuro.
-    Después vuelve a ejecutar el script de validación (_validate.py) con tus herramientas del sandbox; NO debe llamar a `.launch()`.
+    Después vuelve a ejecutar el script de validación (scripts/_validate.py) con tus herramientas del sandbox; NO debe llamar a `.launch()`.
     Mantén app.py exponiendo un `demo` a nivel de módulo y lanzándolo únicamente bajo `if __name__ == "__main__"`.
     Estos son los requisitos: {requirements}
   expected_output: >
@@ -240,11 +256,11 @@ change_frontend_task:
   description: >
     Adapta app.py SOLO a lo que el diseño del cambio te asigna, más cualquier ajuste que exijan los cambios de backend. La interfaz ya existe: no la recrees.
     Lee primero app.py y modifícalo con Replace In Sandbox File. Si la cabecera aún no muestra la versión, añádela leyéndola con `from version import __version__` (version.py lo gestiona el sistema; no lo edites). Mantén la paleta, el modo claro/oscuro, el `demo` a nivel de módulo
-    y el lanzamiento únicamente bajo `if __name__ == "__main__"`. Si hace falta, amplía _validate.py (sin llamar a `.launch()`) y ejecútalo.
+    y el lanzamiento únicamente bajo `if __name__ == "__main__"`. Si hace falta, amplía scripts/_validate.py (sin llamar a `.launch()`) y ejecútalo.
     Las funciones nuevas deben cumplir los estándares (máximo 40 líneas, tipos y docstring); no refactorices lo que no tocas.
     Petición de cambio: {cambio}
   expected_output: >
-    Lista breve de los cambios de frontend aplicados y el resultado correcto de _validate.py.
+    Lista breve de los cambios de frontend aplicados y el resultado correcto de scripts/_validate.py.
   agent: frontend_engineer
   context:
     - change_design_task
@@ -254,7 +270,7 @@ change_test_task:
   description: >
     Escribe pruebas unitarias (módulo `unittest`) para el comportamiento nuevo o modificado, en un archivo nuevo test_cambio_{cambio_id}.py.
     No reescribas las pruebas existentes. Ejecuta TODAS las pruebas (cada archivo test_*.py) y corrige los defectos del backend que encuentres;
-    si cambias código del backend, mantén los estándares y comprueba que app.py sigue construyéndose con _validate.py.
+    si cambias código del backend, mantén los estándares y comprueba que app.py sigue construyéndose con scripts/_validate.py.
     Petición de cambio: {cambio}
   expected_output: >
     Un resumen en markdown de las pruebas nuevas y del resultado de la suite completa (cuántas pasan, cuántas fallan y por qué).
@@ -268,11 +284,11 @@ change_test_task:
 change_audit_task:
   description: >
     Audita el cambio realizado. Comprueba (1) que la petición se cumple, citando la evidencia concreta que has visto (función, prueba o control de la interfaz),
-    (2) que no hay regresiones: ejecuta todas las pruebas y _validate.py, y (3) que Check Code Quality no empeora en lo que se ha tocado.
+    (2) que no hay regresiones: ejecuta todas las pruebas y scripts/_validate.py, y (3) que Check Code Quality no empeora en lo que se ha tocado.
     No arregles nada; solo informa, en español, empezando por lo que falte o falle.
     Petición de cambio: {cambio}
   expected_output: >
-    Un informe en markdown, en español: veredicto (cumplido / parcial / no cumplido), evidencia, resultado de las pruebas y de _validate.py,
+    Un informe en markdown, en español: veredicto (cumplido / parcial / no cumplido), evidencia, resultado de las pruebas y de scripts/_validate.py,
     y los problemas pendientes ordenados por gravedad.
   agent: requirements_auditor
   context:

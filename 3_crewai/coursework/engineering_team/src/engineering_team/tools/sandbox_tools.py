@@ -140,6 +140,8 @@ def _docker_uv_run(*uv_run_args: str) -> list[str]:
         "-w", "/workspace",
         # Keep the Linux venv inside the container, out of the host-mounted sandbox.
         "-e", "UV_PROJECT_ENVIRONMENT=/tmp/venv",
+        # Scripts in scripts/ can import the modules in the sandbox root without touching sys.path.
+        "-e", "PYTHONPATH=/workspace",
         "ghcr.io/astral-sh/uv:python3.13-bookworm-slim",
         "uv", "run", *uv_run_args,
     ]

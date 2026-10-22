@@ -95,6 +95,15 @@ class EngineeringTeam():
         )
 
     @agent
+    def code_reviewer(self) -> Agent:
+        return Agent(
+            config=self.agents_config['code_reviewer'],
+            llm=_llm(),
+            verbose=True,
+            tools=ux_tools
+        )
+
+    @agent
     def manual_writer(self) -> Agent:
         return Agent(
             config=self.agents_config['manual_writer'],
@@ -137,6 +146,12 @@ class EngineeringTeam():
     def requirements_audit_task(self) -> Task:
         return Task(
             config=self.tasks_config['requirements_audit_task'],
+        )
+
+    @task
+    def code_review_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['code_review_task'],
         )
 
     @task
@@ -253,7 +268,7 @@ class EngineeringTeam():
         return self._build_crew(
             [
                 self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
-                self.ux_reviewer(), self.fiscal_reviewer(), self.requirements_auditor(), self.manual_writer(),
+                self.ux_reviewer(), self.fiscal_reviewer(), self.requirements_auditor(), self.code_reviewer(), self.manual_writer(),
             ],
             change=False,
         )
