@@ -11,6 +11,12 @@ from .tools.sandbox_tools import SANDBOX_DIR, backup_sandbox, reset_sandbox
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
+# The agents read and print text with emojis and accents (app.py has them). When stdout is piped
+# (for example `| Tee-Object`) Windows falls back to cp1252 and CrewAI's console output would crash.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 # This main file is intended to be a way for you to run your
 # crew locally, so refrain from adding unnecessary logic into this file.
 # Replace with inputs you want to test with, it will automatically
