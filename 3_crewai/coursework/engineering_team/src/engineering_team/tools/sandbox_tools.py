@@ -106,6 +106,8 @@ def run_sandbox_python(filename: str) -> str:
                 "docker", "run", "--rm",
                 "-v", f"{SANDBOX_DIR}:/workspace",
                 "-w", "/workspace",
+                # Keep the Linux venv inside the container, out of the host-mounted sandbox.
+                "-e", "UV_PROJECT_ENVIRONMENT=/tmp/venv",
                 "ghcr.io/astral-sh/uv:python3.13-bookworm-slim",
                 "uv", "run", filename,
             ],
