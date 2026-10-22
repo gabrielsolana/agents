@@ -26,12 +26,24 @@ def reset_release_flag(inputs: dict | None = None) -> dict | None:
     return inputs
 
 
+def _release_path(relative: str):
+    """Path of a release file inside the sandbox; refuses symlinks (the file or any parent folder)
+    and anything that resolves outside the sandbox, because these writes happen on the host."""
+    raw = sb.SANDBOX_DIR / relative
+    for candidate in (raw, *raw.parents):
+        if candidate == sb.SANDBOX_DIR:
+            break
+        if candidate.is_symlink():
+            raise ValueError(f"{relative} es o cuelga de un enlace simbólico; no se escribe.")
+    return sb._safe_path(relative)
+
+
 def _version_path():
-    return sb.SANDBOX_DIR / VERSION_FILE
+    return _release_path(VERSION_FILE)
 
 
 def _changelog_path():
-    return sb.SANDBOX_DIR / CHANGELOG_FILE
+    return _release_path(CHANGELOG_FILE)
 
 
 def read_version() -> str | None:
@@ -125,13 +137,20 @@ def register_release(bump: str, summary: str, added: list[str], fixed: list[str]
         The new version, or the reason it was not registered.
     """
     global _released_in_this_run
-    current = read_version()
+    try:
+        current = read_version()
+        _changelog_path()
+    except ValueError as exc:
+        return f"No registrada: {exc}"
     problem = _release_problem(current, bump, summary, added, fixed)
     if problem:
         return f"No registrada: {problem}"
     version = next_version(current, bump)
-    _write_version(version)
-    _insert_entry(_entry(version, summary, added, fixed))
+    try:
+        _write_version(version)
+        _insert_entry(_entry(version, summary, added, fixed))
+    except ValueError as exc:
+        return f"No registrada: {exc}"
     _released_in_this_run = True
     return f"Versión registrada: {current} -> {version}. Entrada añadida a {CHANGELOG_FILE}."
 

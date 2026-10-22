@@ -2,6 +2,7 @@ from crewai.tools import tool
 from pathlib import Path
 import ast
 import base64
+import os
 import shutil
 import subprocess
 from datetime import datetime
@@ -19,6 +20,8 @@ RELEASE_FILES = {"version.py", "docs/versiones.md"}
 # Previous sandboxes are copied here (outside the sandbox, git-ignored) before every reset.
 BACKUP_DIR = Path(__file__).parents[3] / "sandbox_backups"
 KEEP_BACKUPS = 5
+MAX_LISTED_FILES = 500
+_SKIPPED_DIRS = {".venv", "__pycache__"}
 _NOT_WORTH_BACKING_UP = PROTECTED_FILES | {".venv", "__pycache__"}
 
 
@@ -73,12 +76,20 @@ def list_sandbox_files() -> str:
         A newline-separated list of paths relative to the sandbox, or a
         message if the sandbox is empty.
     """
-    names = sorted(
-        p.relative_to(SANDBOX_DIR).as_posix()
-        for p in SANDBOX_DIR.rglob("*")
-        if p.is_file() and not {".venv", "__pycache__"} & set(p.relative_to(SANDBOX_DIR).parts)
-    )
-    return "\n".join(names) if names else "The sandbox is empty."
+    names = []
+    for folder, dirs, files in os.walk(SANDBOX_DIR, followlinks=False):
+        # Prune generated folders and symlinked folders (os.walk lists them but would not enter them).
+        dirs[:] = sorted(d for d in dirs if d not in _SKIPPED_DIRS and not (Path(folder) / d).is_symlink())
+        for name in files:
+            path = Path(folder) / name
+            if not path.is_symlink():
+                names.append(path.relative_to(SANDBOX_DIR).as_posix())
+    names.sort()
+    if not names:
+        return "The sandbox is empty."
+    shown = names[:MAX_LISTED_FILES]
+    extra = len(names) - len(shown)
+    return "\n".join(shown + ([f"... and {extra} more files not shown."] if extra else []))
 
 
 @tool("Read Sandbox File")
