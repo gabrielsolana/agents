@@ -68,3 +68,34 @@ def _resolve_external(self, mcp_ref: str) -> list[BaseTool]:
 
 
 MCPToolResolver._resolve_external = _resolve_external
+
+
+# --- Anthropic prompt caching ------------------------------------------------------------------
+# CrewAI 1.14.4 never sends `cache_control`, so every tool-loop iteration pays full price for the whole
+# history it re-sends (cache tokens were 0 in every cost report). The Messages API supports automatic
+# caching through a single top-level `cache_control` field: the breakpoint moves forward as the
+# conversation grows and cache reads cost a fraction of normal input. The SDK in use has no keyword
+# for it, so it goes through `extra_body`. Set ANTHROPIC_PROMPT_CACHE=0 to turn it off.
+import functools
+import os
+
+from anthropic.resources.messages import AsyncMessages, Messages
+
+
+def _with_prompt_cache(original):
+    @functools.wraps(original)
+    def wrapper(self, *args, **kwargs):
+        body = dict(kwargs.get("extra_body") or {})
+        body.setdefault("cache_control", {"type": "ephemeral"})
+        kwargs["extra_body"] = body
+        return original(self, *args, **kwargs)
+
+    wrapper._prompt_cache_patched = True
+    return wrapper
+
+
+if os.environ.get("ANTHROPIC_PROMPT_CACHE", "1") != "0":
+    for _cls in (Messages, AsyncMessages):
+        for _name in ("create", "stream"):
+            if not getattr(getattr(_cls, _name), "_prompt_cache_patched", False):
+                setattr(_cls, _name, _with_prompt_cache(getattr(_cls, _name)))
