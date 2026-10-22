@@ -29,11 +29,11 @@ def reset_release_flag(inputs: dict | None = None) -> dict | None:
 
 
 def user_visible_change(_previous_output=None) -> bool:
-    """Condition for the manual task: the registered release added features or fixed bugs the user can notice.
+    """Condition for the manual task: the registered release changes what the user sees or does.
 
-    Internal improvements alone (refactors, tests) and runs without a registered release do not need a manual update.
+    Refactors, tests, validations and internal fixes, and runs without a registered release, do not need a manual update.
     """
-    return bool(_last_release.get("added") or _last_release.get("fixed"))
+    return bool(_last_release.get("user_visible"))
 
 
 def _release_path(relative: str):
@@ -137,7 +137,12 @@ def _release_problem(
 
 @tool("Register Release")
 def register_release(
-    bump: str, summary: str, added: list[str], fixed: list[str], improved: list[str] | None = None
+    bump: str,
+    summary: str,
+    added: list[str],
+    fixed: list[str],
+    improved: list[str] | None = None,
+    user_visible: bool = False,
 ) -> str:
     """
     Register a new version of the application: it raises the version number in version.py and
@@ -152,6 +157,9 @@ def register_release(
         fixed: Bugs fixed, one short user-oriented sentence per item, in Spanish (empty list if none).
         improved: Internal improvements that do not change what the user sees or does (refactors, tests,
             documentation, code quality), one short sentence per item, in Spanish. They only justify a "patch" bump.
+        user_visible: True when what the user sees or does in the application changes (new functionality, or a fix
+            whose effect the user notices), so the user manual must be reviewed. False for refactors, tests, validations
+            and internal fixes. New functionality (`added`) always counts as visible.
     Returns:
         The new version, or the reason it was not registered.
     """
@@ -172,7 +180,8 @@ def register_release(
     except ValueError as exc:
         return f"No registrada: {exc}"
     _released_in_this_run = True
-    _last_release.update(added=[i for i in added if i.strip()], fixed=[i for i in fixed if i.strip()], improved=[i for i in improved if i.strip()])
+    _last_release.update(added=[i for i in added if i.strip()], fixed=[i for i in fixed if i.strip()], improved=[i for i in improved if i.strip()],
+                         user_visible=["yes"] if (user_visible or any(i.strip() for i in added)) else [])
     return f"Versión registrada: {current} -> {version}. Entrada añadida a {CHANGELOG_FILE}."
 
 

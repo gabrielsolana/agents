@@ -194,7 +194,9 @@ release_task:
     basada en los requisitos y en lo que consta en el manual); `fixed` va vacío porque es la primera versión.
     Reglas de versionado (MAYOR.MENOR.PARCHE): con funcionalidad nueva, bump=minor; solo con correcciones o mejoras internas, bump=patch;
     con un cambio incompatible (por ejemplo, en el formato de los datos guardados), bump=major. Las refactorizaciones, pruebas y mejoras de calidad
-    que no cambian lo que ve o hace el usuario van en `improved`. La herramienta calcula el número
+    que no cambian lo que ve o hace el usuario van en `improved`. Marca `user_visible` como verdadero solo si el usuario nota el cambio
+    (funcionalidad nueva, o una corrección cuyo efecto se aprecia en pantalla); con refactors, pruebas, validaciones o correcciones internas va falso,
+    y entonces no se actualiza el manual. La herramienta calcula el número
     y rechaza combinaciones incoherentes; no edites version.py ni docs/versiones.md a mano, no puedes.
     Usa solo lo que consta en la documentación y en las revisiones; no inventes funciones.
   expected_output: >
@@ -308,7 +310,9 @@ change_release_task:
     al usuario y en español, basadas solo en lo que consta en el diseño y en la auditoría.
     Reglas de versionado (MAYOR.MENOR.PARCHE): con funcionalidad nueva, bump=minor; solo con correcciones o mejoras internas, bump=patch;
     con un cambio incompatible (por ejemplo, en el formato de los datos guardados), bump=major. Las refactorizaciones, pruebas y mejoras de calidad
-    que no cambian lo que ve o hace el usuario van en `improved`. La herramienta calcula el número
+    que no cambian lo que ve o hace el usuario van en `improved`. Marca `user_visible` como verdadero solo si el usuario nota el cambio
+    (funcionalidad nueva, o una corrección cuyo efecto se aprecia en pantalla); con refactors, pruebas, validaciones o correcciones internas va falso,
+    y entonces no se actualiza el manual. La herramienta calcula el número
     y rechaza combinaciones incoherentes; no edites version.py ni docs/versiones.md a mano, no puedes.
     Petición de cambio: {cambio}
   expected_output: >
