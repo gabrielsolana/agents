@@ -53,6 +53,15 @@ def reset_sandbox() -> None:
     subprocess.run(["uv", "init", "--bare", "--no-workspace", "--python", "3.13"], cwd=SANDBOX_DIR, check=True)
     subprocess.run(["uv", "add", "gradio"], cwd=SANDBOX_DIR, check=True)
 
+def _syntax_error(source: str) -> str | None:
+    """Why a piece of Python source does not parse, or None if it is valid."""
+    try:
+        ast.parse(source)
+    except (SyntaxError, ValueError, RecursionError) as exc:
+        return str(exc)
+    return None
+
+
 def _safe_path(filename: str, for_write: bool = False) -> Path:
     """Resolve filename inside the sandbox, rejecting anything that escapes it."""
     base = SANDBOX_DIR.resolve()
@@ -61,6 +70,8 @@ def _safe_path(filename: str, for_write: bool = False) -> Path:
         raise ValueError(f"Path escapes the sandbox: {filename}")
     if p.parent == base and p.name.lower() in PROTECTED_FILES:
         raise ValueError(f"Protected file, not accessible: {filename}")
+    if for_write and p.parent == base and p.name.startswith("_") and p.suffix == ".py":
+        raise ValueError(f"Auxiliary scripts (names starting with an underscore) go in scripts/, not in the sandbox root: {filename}")
     if for_write and p.relative_to(base).as_posix().lower() in RELEASE_FILES:
         raise ValueError(f"{filename} is managed by the Register Release tool and cannot be edited directly")
     return p
@@ -127,6 +138,10 @@ def write_sandbox_file(filename: str, content: str) -> str:
         path = _safe_path(filename, for_write=True)
     except ValueError as e:
         return str(e)
+    if path.suffix == ".py":
+        error = _syntax_error(content)
+        if error:
+            return f"Not written: {filename} would not be valid Python ({error}). Send the complete, corrected file."
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
     return f"Wrote {len(content)} characters to {filename}."
@@ -176,7 +191,13 @@ def replace_in_sandbox_file(filename: str, old_text: str, new_text: str) -> str:
         return f"old_text was not found in {filename}. Read the file again and copy the text exactly."
     if count > 1:
         return f"old_text appears {count} times in {filename}; add surrounding lines so it is unique."
-    path.write_text(content.replace(old_text, new_text, 1), encoding="utf-8")
+    updated = content.replace(old_text, new_text, 1)
+    # Never turn a valid Python file into a broken one (a truncated block once corrupted accounting.py).
+    if path.suffix == ".py" and _syntax_error(content) is None:
+        error = _syntax_error(updated)
+        if error:
+            return f"Not applied: the edit would leave {filename} with a syntax error ({error}). Replace a complete block."
+    path.write_text(updated, encoding="utf-8")
     return f"Replaced 1 occurrence in {filename}."
 
 

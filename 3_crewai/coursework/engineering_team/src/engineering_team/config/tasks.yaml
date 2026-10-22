@@ -257,7 +257,7 @@ change_frontend_task:
   description: >
     Adapta app.py SOLO a lo que el diseño del cambio te asigna, más cualquier ajuste que exijan los cambios de backend. La interfaz ya existe: no la recrees.
     Lee primero app.py y modifícalo con Replace In Sandbox File. Si la cabecera aún no muestra la versión, añádela leyéndola con `from version import __version__` (version.py lo gestiona el sistema; no lo edites). Mantén la paleta, el modo claro/oscuro, el `demo` a nivel de módulo
-    y el lanzamiento únicamente bajo `if __name__ == "__main__"`. Si hace falta, amplía scripts/_validate.py (sin llamar a `.launch()`) y ejecútalo.
+    y el lanzamiento únicamente bajo `if __name__ == "__main__"`. Ejecuta scripts/_validate.py (sin llamar a `.launch()`); solo si el diseño lo pide, amplíalo. No modifiques ningún otro archivo que el diseño no mencione.
     Las funciones nuevas deben cumplir los estándares (máximo 40 líneas, tipos y docstring); no refactorices lo que no tocas.
     Petición de cambio: {cambio}
   expected_output: >
@@ -287,6 +287,7 @@ change_audit_task:
     Audita el cambio realizado. Comprueba (1) que la petición se cumple, citando la evidencia concreta que has visto (función, prueba o control de la interfaz),
     (2) que no hay regresiones: ejecuta todas las pruebas y scripts/_validate.py, y (3) que Check Code Quality no empeora en lo que se ha tocado.
     No arregles nada; solo informa, en español, empezando por lo que falte o falle.
+    La versión y el historial (version.py, docs/versiones.md) se registran DESPUÉS de tu auditoría: no los señales como pendientes.
     Petición de cambio: {cambio}
   expected_output: >
     Un informe en markdown, en español: veredicto (cumplido / parcial / no cumplido), evidencia, resultado de las pruebas y de scripts/_validate.py,
