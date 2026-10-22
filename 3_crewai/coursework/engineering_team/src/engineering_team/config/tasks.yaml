@@ -241,7 +241,7 @@ change_design_task:
 
 change_code_task:
   description: >
-    Implementa en el backend SOLO lo que el diseño del cambio te asigna. La aplicación ya existe: no la recrees.
+    Implementa en el backend SOLO lo que el diseño del cambio te asigna (si no hay diseño aparte, lo que te asigna la decisión aceptada que recibes como contexto). La aplicación ya existe: no la recrees.
     Lee primero el archivo que vayas a tocar y modifícalo con la herramienta Replace In Sandbox File (no reescribas archivos enteros).
     Después de cambiar, ejecuta las pruebas existentes (los archivos test_*.py) con run_sandbox_python; deben seguir pasando.
     Check Code Quality puede listar problemas que ya existían antes de tu cambio: corrige los de lo que añades o modificas
@@ -255,7 +255,7 @@ change_code_task:
 
 change_frontend_task:
   description: >
-    Adapta app.py SOLO a lo que el diseño del cambio te asigna, más cualquier ajuste que exijan los cambios de backend. La interfaz ya existe: no la recrees.
+    Adapta app.py SOLO a lo que el diseño del cambio te asigna (o la decisión aceptada, si no hay diseño aparte), más cualquier ajuste que exijan los cambios de backend. La interfaz ya existe: no la recrees.
     Lee primero app.py y modifícalo con Replace In Sandbox File. Si la cabecera aún no muestra la versión, añádela leyéndola con `from version import __version__` (version.py lo gestiona el sistema; no lo edites). Mantén la paleta, el modo claro/oscuro, el `demo` a nivel de módulo
     y el lanzamiento únicamente bajo `if __name__ == "__main__"`. Ejecuta scripts/_validate.py (sin llamar a `.launch()`); solo si el diseño lo pide, amplíalo. No modifiques ningún otro archivo que el diseño no mencione.
     Las funciones nuevas deben cumplir los estándares (máximo 40 líneas, tipos y docstring); no refactorices lo que no tocas.
@@ -377,6 +377,8 @@ apply_decision_task:
     Ningún cambio puede alterar firmas públicas usadas por app.py ni por las pruebas, salvo que el propio cambio incluya su adaptación.
     Asigna cada cambio aceptado a backend_engineer o frontend_engineer. No escribas código.
     El documento empieza por un resumen previo que se mostrará al usuario antes de que empiece el trabajo: sé claro y concreto, sin tecnicismos innecesarios.
+    Esta decisión es la única especificación que recibirán los ingenieros (no habrá un diseño aparte): cada cambio debe llevar lo necesario para hacerlo sin dudas
+    (archivo y funciones, firmas, qué no tocar y cómo verificarlo), pero sé conciso: unas 120 palabras por cambio y nada que repita el informe de revisión.
   expected_output: >
     Un documento en markdown, en español. Empieza por la sección "Resumen previo" con: (1) "Riesgo global": bajo, medio o alto, con una o dos frases que expliquen por qué
     y qué podría salir mal; (2) "Se va a corregir": una línea por cada cambio aceptado (id y qué se hace); (3) "No se tocará": cuántos hallazgos se rechazan y por qué, en una frase.

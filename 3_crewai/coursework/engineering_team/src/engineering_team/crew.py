@@ -270,17 +270,30 @@ class EngineeringTeam():
 
     _PIPELINE_PREFIXES = ("change_", "solo_", "apply_")
 
-    def _tasks(self, prefix: str | tuple[str, ...] | None) -> list[Task]:
+    def _tasks(self, prefix: str | tuple[str, ...] | None, skip: tuple[str, ...] = ()) -> list[Task]:
         """Tasks of one pipeline: those starting with `prefix`, or the new-build ones when prefix is None."""
         if prefix is None:
-            return [t for t in self.tasks if not (t.name or "").startswith(self._PIPELINE_PREFIXES)]
-        return [t for t in self.tasks if (t.name or "").startswith(prefix)]
+            chosen = [t for t in self.tasks if not (t.name or "").startswith(self._PIPELINE_PREFIXES)]
+        else:
+            chosen = [t for t in self.tasks if (t.name or "").startswith(prefix)]
+        return [t for t in chosen if t.name not in skip]
 
-    def _build_crew(self, agents: list[BaseAgent], prefix: str | tuple[str, ...] | None) -> Crew:
+    def _replace_context(self, removed: str, replacement: str) -> None:
+        """In every task whose context holds `removed`, put `replacement` in its place."""
+        by_name = {t.name: t for t in self.tasks}
+        old, new = by_name[removed], by_name[replacement]
+        for task in self.tasks:
+            context = task.context
+            if isinstance(context, list) and any(c is old for c in context):
+                task.context = [new if c is old else c for c in context]
+
+    def _build_crew(
+        self, agents: list[BaseAgent], prefix: str | tuple[str, ...] | None, skip: tuple[str, ...] = ()
+    ) -> Crew:
         the_crew = Crew(
             agents=agents,
             manager_agent=self.engineering_lead(),
-            tasks=self._tasks(prefix),
+            tasks=self._tasks(prefix, skip),
             process=Process.sequential,
             verbose=True,
             tracing=True,
@@ -314,13 +327,18 @@ class EngineeringTeam():
 
     @crew_decorator
     def apply_review_crew(self) -> Crew:
-        """Creates the crew that applies the findings of a review: the lead filters them, then the change pipeline runs"""
+        """Creates the crew that applies the findings of a review: the lead filters them, then the change pipeline runs.
+
+        The decision already carries the specification (changes, assignees, verification), so the separate design task
+        is skipped and its dependants read the decision instead."""
+        self._replace_context("change_design_task", "apply_decision_task")
         return self._build_crew(
             [
                 self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
                 self.requirements_auditor(), self.manual_writer(), self.release_manager(),
             ],
             prefix=("apply_", "change_"),
+            skip=("change_design_task",),
         )
 
     @crew_decorator

@@ -3,6 +3,7 @@ from pathlib import Path
 import ast
 import base64
 import os
+import re
 import shutil
 import subprocess
 from datetime import datetime
@@ -21,6 +22,9 @@ RELEASE_FILES = {"version.py", "docs/versiones.md"}
 BACKUP_DIR = Path(__file__).parents[3] / "sandbox_backups"
 KEEP_BACKUPS = 5
 MAX_LISTED_FILES = 500
+MAX_OUTLINE_LINES = 400
+MAX_SEARCH_HITS = 60
+SEARCHABLE_SUFFIXES = {".py", ".md", ".txt", ".toml", ".json", ".yaml", ".yml", ".csv"}
 _SKIPPED_DIRS = {".venv", "__pycache__"}
 _NOT_WORTH_BACKING_UP = PROTECTED_FILES | {".venv", "__pycache__"}
 
@@ -104,14 +108,19 @@ def list_sandbox_files() -> str:
 
 
 @tool("Read Sandbox File")
-def read_sandbox_file(filename: str) -> str:
+def read_sandbox_file(filename: str, start_line: int = 0, end_line: int = 0) -> str:
     """
-    Read and return the text contents of a file in the sandbox directory.
+    Read and return the text contents of a file in the sandbox directory. Large files cost a lot
+    of tokens: use Outline Sandbox File or Search Sandbox to find what you need and then read only
+    that range with start_line and end_line.
 
     Args:
         filename: The name of the file to read (e.g. "solution.py").
+        start_line: Optional first line to return (1-based). Leave 0 to read from the beginning.
+        end_line: Optional last line to return (inclusive). Leave 0 to read to the end.
+            When a range is given, each line is prefixed with its number ("123: text").
     Returns:
-        The file's contents, or a message if the file does not exist.
+        The file's contents (or the requested lines), or a message if the file does not exist.
     """
     try:
         path = _safe_path(filename)
@@ -119,7 +128,98 @@ def read_sandbox_file(filename: str) -> str:
         return str(e)
     if not path.is_file():
         return f"No such file in the sandbox: {filename}"
-    return path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8")
+    if not (start_line or end_line):
+        return text
+    lines = text.splitlines()
+    first = max(start_line, 1)
+    last = min(end_line, len(lines)) if end_line else len(lines)
+    if first > len(lines):
+        return f"{filename} has only {len(lines)} lines."
+    return "\n".join(f"{n}: {lines[n - 1]}" for n in range(first, last + 1))
+
+
+@tool("Outline Sandbox File")
+def outline_sandbox_file(filename: str) -> str:
+    """
+    Show the structure of a file without reading it all: for Python, every class, function and
+    method with its line range; for markdown, every heading with its line number. Use it first on
+    large files, then read only the ranges you need with Read Sandbox File.
+
+    Args:
+        filename: The Python (.py) or markdown (.md) file to outline (e.g. "accounting.py").
+    Returns:
+        An indented outline with line numbers.
+    """
+    try:
+        path = _safe_path(filename)
+    except ValueError as e:
+        return str(e)
+    if not path.is_file():
+        return f"No such file in the sandbox: {filename}"
+    text = path.read_text(encoding="utf-8", errors="replace")
+    if path.suffix == ".md":
+        found = [f"L{n}: {line}" for n, line in enumerate(text.splitlines(), 1) if line.startswith("#")]
+        return "\n".join(found[:MAX_OUTLINE_LINES]) or "No headings found."
+    if path.suffix != ".py":
+        return "Outline only supports .py and .md files; use Read Sandbox File."
+    try:
+        tree = ast.parse(text)
+    except (SyntaxError, ValueError, RecursionError) as exc:
+        return f"Cannot outline {filename}: {exc}"
+    out: list[str] = []
+
+    def visit(body: list, depth: int) -> None:
+        for node in body:
+            if isinstance(node, ast.ClassDef):
+                out.append(f"{'  ' * depth}class {node.name} (L{node.lineno}-{node.end_lineno})")
+                visit(node.body, depth + 1)
+            elif isinstance(node, _FUNCTION_NODES):
+                out.append(f"{'  ' * depth}def {node.name} (L{node.lineno}-{node.end_lineno})")
+
+    visit(tree.body, 0)
+    extra = len(out) - MAX_OUTLINE_LINES
+    shown = out[:MAX_OUTLINE_LINES] + ([f"... and {extra} more entries."] if extra > 0 else [])
+    return "\n".join(shown) or "No classes or functions found."
+
+
+@tool("Search Sandbox")
+def search_sandbox(pattern: str, filename: str = "") -> str:
+    """
+    Search the sandbox with a regular expression and return the matching lines with their file and
+    line number. Much cheaper than reading whole files to find where something is used.
+
+    Args:
+        pattern: A Python regular expression (e.g. "def preview_recurring|_ACTIVE_STATUSES").
+        filename: Optional single file to search. Leave empty to search every text file in the sandbox.
+    Returns:
+        Up to 60 lines formatted as "file:line: text".
+    """
+    try:
+        regex = re.compile(pattern)
+    except re.error as exc:
+        return f"Invalid regular expression: {exc}"
+    try:
+        if filename:
+            paths = [_safe_path(filename)]
+        else:
+            paths = []
+            for folder, dirs, files in os.walk(SANDBOX_DIR, followlinks=False):
+                dirs[:] = [d for d in dirs if d not in _SKIPPED_DIRS and not (Path(folder) / d).is_symlink()]
+                paths += [Path(folder) / f for f in sorted(files) if not (Path(folder) / f).is_symlink()]
+    except ValueError as exc:
+        return str(exc)
+    hits: list[str] = []
+    for path in sorted(paths):
+        if not path.is_file() or path.suffix not in SEARCHABLE_SUFFIXES or path.name in PROTECTED_FILES:
+            continue
+        for number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if regex.search(line):
+                hits.append(f"{path.relative_to(SANDBOX_DIR).as_posix()}:{number}: {line.strip()[:160]}")
+    if not hits:
+        return "No matches."
+    extra = len(hits) - MAX_SEARCH_HITS
+    return "\n".join(hits[:MAX_SEARCH_HITS] + ([f"... and {extra} more matches."] if extra > 0 else []))
 
 
 @tool("Write Sandbox File")
@@ -418,11 +518,14 @@ def check_code_quality(filename: str = "") -> str:
 
 
 sandbox_tools = [
-    list_sandbox_files, read_sandbox_file, write_sandbox_file, replace_in_sandbox_file,
-    run_sandbox_python, check_code_quality,
+    list_sandbox_files, read_sandbox_file, outline_sandbox_file, search_sandbox, write_sandbox_file,
+    replace_in_sandbox_file, run_sandbox_python, check_code_quality,
 ]
 # Read-only view of the sandbox (+ layout inspection) for reviewers and the manual writer.
-ux_tools = [list_sandbox_files, read_sandbox_file, inspect_gradio_layout, check_code_quality]
+ux_tools = [
+    list_sandbox_files, read_sandbox_file, outline_sandbox_file, search_sandbox,
+    inspect_gradio_layout, check_code_quality,
+]
 
 
 def _never_cache(*_args, **_kwargs) -> bool:
