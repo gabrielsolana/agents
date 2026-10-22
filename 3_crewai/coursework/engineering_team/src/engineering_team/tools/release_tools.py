@@ -17,13 +17,23 @@ _CHANGELOG_HEADER = (
 )
 
 _released_in_this_run = False
+_last_release: dict[str, list[str]] = {}
 
 
 def reset_release_flag(inputs: dict | None = None) -> dict | None:
     """before_kickoff callback: allow one release registration per run."""
     global _released_in_this_run
     _released_in_this_run = False
+    _last_release.clear()
     return inputs
+
+
+def user_visible_change(_previous_output=None) -> bool:
+    """Condition for the manual task: the registered release added features or fixed bugs the user can notice.
+
+    Internal improvements alone (refactors, tests) and runs without a registered release do not need a manual update.
+    """
+    return bool(_last_release.get("added") or _last_release.get("fixed"))
 
 
 def _release_path(relative: str):
@@ -162,6 +172,7 @@ def register_release(
     except ValueError as exc:
         return f"No registrada: {exc}"
     _released_in_this_run = True
+    _last_release.update(added=[i for i in added if i.strip()], fixed=[i for i in fixed if i.strip()], improved=[i for i in improved if i.strip()])
     return f"Versión registrada: {current} -> {version}. Entrada añadida a {CHANGELOG_FILE}."
 
 

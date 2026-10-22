@@ -1,4 +1,5 @@
 from crewai import Agent, Crew, LLM, Process, Task
+from crewai.tasks.conditional_task import ConditionalTask
 # `crew` is aliased: the EngineeringTeam.crew method would otherwise shadow the decorator in the class body.
 from crewai.project import CrewBase, agent, task
 from crewai.project import crew as crew_decorator
@@ -7,7 +8,7 @@ from .tools.sandbox_tools import (
     replace_in_sandbox_file, sandbox_tools, ux_tools, write_sandbox_file,
 )
 from .tools.cost_tools import cost_tools, mark_start, mark_task_done, register_crew
-from .tools.release_tools import release_tools, reset_release_flag
+from .tools.release_tools import release_tools, reset_release_flag, user_visible_change
 # If you want to run a snippet of code before or after the crew starts,
 # you can use the @before_kickoff and @after_kickoff decorators
 # https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
@@ -35,7 +36,7 @@ class EngineeringTeam():
             config=self.agents_config['engineering_lead'],
             llm=_llm(STRONG_MODEL),
             verbose=True,
-            tools=ux_tools + cost_tools + release_tools,
+            tools=ux_tools,
             mcps=["https://mcp.context7.com/mcp"]
         )
 
@@ -101,6 +102,15 @@ class EngineeringTeam():
             llm=_llm(),
             verbose=True,
             tools=ux_tools
+        )
+
+    @agent
+    def release_manager(self) -> Agent:
+        return Agent(
+            config=self.agents_config['release_manager'],
+            llm=_llm(),
+            verbose=True,
+            tools=ux_tools + cost_tools + release_tools
         )
 
     @agent
@@ -246,8 +256,10 @@ class EngineeringTeam():
 
     @task
     def change_manual_task(self) -> Task:
-        return Task(
+        # Only worth the tokens when the registered release changes what the user sees or does.
+        return ConditionalTask(
             config=self.tasks_config['change_manual_task'],
+            condition=user_visible_change,
         )
 
     @task
@@ -284,7 +296,7 @@ class EngineeringTeam():
         return self._build_crew(
             [
                 self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
-                self.ux_reviewer(), self.fiscal_reviewer(), self.requirements_auditor(), self.code_reviewer(), self.manual_writer(),
+                self.ux_reviewer(), self.fiscal_reviewer(), self.requirements_auditor(), self.code_reviewer(), self.manual_writer(), self.release_manager(),
             ],
             prefix=None,
         )
@@ -295,7 +307,7 @@ class EngineeringTeam():
         return self._build_crew(
             [
                 self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
-                self.requirements_auditor(), self.manual_writer(),
+                self.requirements_auditor(), self.manual_writer(), self.release_manager(),
             ],
             prefix="change_",
         )
@@ -306,7 +318,7 @@ class EngineeringTeam():
         return self._build_crew(
             [
                 self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
-                self.requirements_auditor(), self.manual_writer(),
+                self.requirements_auditor(), self.manual_writer(), self.release_manager(),
             ],
             prefix=("apply_", "change_"),
         )

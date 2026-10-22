@@ -199,7 +199,7 @@ release_task:
     Usa solo lo que consta en la documentación y en las revisiones; no inventes funciones.
   expected_output: >
     La confirmación de la herramienta con la versión registrada y el texto de la entrada del historial.
-  agent: engineering_lead
+  agent: release_manager
   context:
     - requirements_audit_task
     - review_decision_task
@@ -218,7 +218,7 @@ cost_report_task:
     modelos concentran el gasto y en qué porcentaje, el tiempo total de la ejecución y la tabla de tiempo por tarea y por agente
     (qué tareas o agentes concentran más tiempo), qué falta por contabilizar (tarifas sin rellenar, llamadas posteriores a
     la medición) y una advertencia de que es una estimación y no la factura de Console.
-  agent: engineering_lead
+  agent: release_manager
   context:
     - release_task
   output_file: sandbox/docs/informe_coste.md
@@ -312,7 +312,7 @@ change_release_task:
     Petición de cambio: {cambio}
   expected_output: >
     La confirmación de la herramienta con la versión registrada y el texto de la entrada del historial, o la explicación de por qué no se registró.
-  agent: engineering_lead
+  agent: release_manager
   context:
     - change_design_task
     - change_audit_task
@@ -348,7 +348,7 @@ change_cost_report_task:
     qué falta por contabilizar y una advertencia de que es una estimación y no la factura de Console.
     Cierra con una sección "Comentarios": qué se ha hecho, el veredicto de la auditoría y la versión registrada, las observaciones
     importantes del auditor, lo que queda pendiente o se rechazó, y el siguiente paso que recomiendas.
-  agent: engineering_lead
+  agent: release_manager
   context:
     - change_audit_task
     - change_release_task
