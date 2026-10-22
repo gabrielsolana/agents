@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import re
 import sys
 import warnings
 from pathlib import Path
@@ -79,6 +80,8 @@ def change():
     request = _read_change_request(sys.argv[1:])
     if not request:
         raise SystemExit('Uso: change "texto del cambio"  |  change --file cambio.md')
+    if len(re.findall(r"\w", request)) < MIN_REQUEST_LETTERS:
+        raise SystemExit(f"La petición {request!r} es demasiado corta para ser un cambio real; descríbelo con una frase completa.")
     if not (SANDBOX_DIR / "app.py").is_file():
         raise SystemExit("No hay una aplicación en el sandbox (falta app.py). Usa run_crew para construirla primero.")
 
@@ -98,6 +101,7 @@ def change():
 
 
 DEFAULT_MAX_CHANGES = 5
+MIN_REQUEST_LETTERS = 15  # a placeholder such as "..." must not reach the (paid) crew
 
 
 def _resolve_review_file(argument: str) -> str:
