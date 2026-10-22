@@ -2,10 +2,12 @@ from crewai.tools import tool
 from pathlib import Path
 import ast
 import base64
+import functools
 import os
 import re
 import shutil
 import subprocess
+import threading
 from datetime import datetime
 
 
@@ -57,6 +59,42 @@ def reset_sandbox() -> None:
     subprocess.run(["uv", "init", "--bare", "--no-workspace", "--python", "3.13"], cwd=SANDBOX_DIR, check=True)
     subprocess.run(["uv", "add", "gradio"], cwd=SANDBOX_DIR, check=True)
 
+# A model once emitted dozens of identical parallel calls to the same tool in a single response (113 calls to
+# Search Sandbox with the same arguments), each returning a large result and burning the iteration budget.
+# An identical call made right after another one, with no different call in between, is answered with a tiny
+# message instead of being executed again. The guard is reset when a task ends (see cost_tools.mark_task_done)
+# because a new task starts with an empty conversation and must be able to repeat the previous agent's calls.
+_repeat_lock = threading.Lock()
+_last_call: tuple | None = None
+REPEATED_CALL_MESSAGE = (
+    "Repeated call ignored: it is identical to the previous one and its result is already in the conversation above. "
+    "Do not repeat it. To get different information change the arguments or use another tool "
+    "(Outline Sandbox File for structure, Search Sandbox with a `pattern` to locate code, Read Sandbox File with start_line/end_line)."
+)
+
+
+def reset_repeat_guard() -> None:
+    """Forget the last call so that the next one is always executed."""
+    global _last_call
+    with _repeat_lock:
+        _last_call = None
+
+
+def _no_immediate_repeat(func):
+    """Decorator: do not execute a call identical to the one just made."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        global _last_call
+        signature = (func.__name__, repr(args), repr(sorted(kwargs.items())))
+        with _repeat_lock:
+            repeated = signature == _last_call
+            _last_call = signature
+        return REPEATED_CALL_MESSAGE if repeated else func(*args, **kwargs)
+
+    return wrapper
+
+
 def _syntax_error(source: str) -> str | None:
     """Why a piece of Python source does not parse, or None if it is valid."""
     try:
@@ -82,6 +120,7 @@ def _safe_path(filename: str, for_write: bool = False) -> Path:
 
 
 @tool("List Sandbox Files")
+@_no_immediate_repeat
 def list_sandbox_files() -> str:
     """
     List the files currently in the sandbox, including those in subfolders
@@ -108,6 +147,7 @@ def list_sandbox_files() -> str:
 
 
 @tool("Read Sandbox File")
+@_no_immediate_repeat
 def read_sandbox_file(filename: str, start_line: int = 0, end_line: int = 0) -> str:
     """
     Read and return the text contents of a file in the sandbox directory. Large files cost a lot
@@ -174,6 +214,7 @@ def _outline_text(filename: str) -> str:
 
 
 @tool("Outline Sandbox File")
+@_no_immediate_repeat
 def outline_sandbox_file(filename: str) -> str:
     """
     Show the structure of a file without reading it all: for Python, every class, function and
@@ -189,6 +230,7 @@ def outline_sandbox_file(filename: str) -> str:
 
 
 @tool("Search Sandbox")
+@_no_immediate_repeat
 def search_sandbox(pattern: str = "", filename: str = "") -> str:
     """
     Search the sandbox with a regular expression and return the matching lines with their file and
@@ -234,6 +276,7 @@ def search_sandbox(pattern: str = "", filename: str = "") -> str:
 
 
 @tool("Write Sandbox File")
+@_no_immediate_repeat
 def write_sandbox_file(filename: str, content: str) -> str:
     """
     Write text to a file in the sandbox directory, replacing any existing
@@ -274,6 +317,7 @@ def _docker_uv_run(*uv_run_args: str) -> list[str]:
 
 
 @tool("Replace In Sandbox File")
+@_no_immediate_repeat
 def replace_in_sandbox_file(filename: str, old_text: str, new_text: str) -> str:
     """
     Edit an existing file in the sandbox by replacing one exact piece of text with another,
@@ -313,6 +357,7 @@ def replace_in_sandbox_file(filename: str, old_text: str, new_text: str) -> str:
 
 
 @tool("Run Sandbox Python File")
+@_no_immediate_repeat
 def run_sandbox_python(filename: str) -> str:
     """
     Execute a Python file from the sandbox directory inside an ephemeral
@@ -388,6 +433,7 @@ walk(demo, 0)
 
 
 @tool("Inspect Gradio Layout")
+@_no_immediate_repeat
 def inspect_gradio_layout() -> str:
     """
     Print the component tree of the Gradio app in the sandbox (app.py, which must
@@ -485,6 +531,7 @@ def _quality_issues(source: str) -> list[tuple[int, str]]:
 
 
 @tool("Check Code Quality")
+@_no_immediate_repeat
 def check_code_quality(filename: str = "") -> str:
     """
     Statically check the Python code of the sandbox against the team's quality standards:

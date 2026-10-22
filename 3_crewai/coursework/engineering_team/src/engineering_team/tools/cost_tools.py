@@ -4,6 +4,8 @@ from pathlib import Path
 import yaml
 from crewai.tools import tool
 
+from .sandbox_tools import reset_repeat_guard
+
 TARIFAS_PATH = Path(__file__).parents[1] / "config" / "tarifas.yaml"
 
 _crew = None
@@ -22,6 +24,7 @@ def mark_start(inputs: dict | None = None) -> dict | None:
     global _start
     _start = time.time()
     _done.clear()
+    reset_repeat_guard()
     return inputs
 
 
@@ -31,6 +34,7 @@ _ANNOUNCE = {"apply_decision_task": "RIESGO Y CAMBIOS PREVISTOS (el trabajo cont
 
 def mark_task_done(output) -> None:
     """task_callback: record when each task finished and which agent ran it, and announce key results."""
+    reset_repeat_guard()
     name = getattr(output, "name", None) or "?"
     _done.append((name, str(getattr(output, "agent", "") or "?").strip(), time.time()))
     if name in _ANNOUNCE:

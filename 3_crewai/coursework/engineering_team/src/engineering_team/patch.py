@@ -99,3 +99,37 @@ if os.environ.get("ANTHROPIC_PROMPT_CACHE", "1") != "0":
         for _name in ("create", "stream"):
             if not getattr(getattr(_cls, _name), "_prompt_cache_patched", False):
                 setattr(_cls, _name, _with_prompt_cache(getattr(_cls, _name)))
+
+
+# --- Forced final answer when max_iter is reached ---------------------------------------------------
+# CrewAI appends its "give your final answer now" instruction as an *assistant* message (a prefill).
+# Recent Claude models reject that with a 400 ("This model does not support assistant message prefill.
+# The conversation must end with a user message"), which crashed the whole run when an agent used up its
+# iterations. The same instruction is sent here as a user message.
+from crewai.agents import crew_agent_executor
+from crewai.utilities import agent_utils
+
+
+def _handle_max_iterations_exceeded(formatted_answer, printer, messages, llm, callbacks, verbose=True):
+    if verbose:
+        printer.print(content="Maximum iterations reached. Requesting final answer.", color="yellow")
+
+    instruction = agent_utils.I18N_DEFAULT.errors("force_final_answer")
+    if formatted_answer and hasattr(formatted_answer, "text"):
+        instruction = formatted_answer.text + f"\n{instruction}"
+    messages.append(agent_utils.format_message_for_llm(instruction, role="user"))
+
+    answer = llm.call(messages, callbacks=callbacks)
+    if answer is None or answer == "":
+        if verbose:
+            printer.print(content="Received None or empty response from LLM call.", color="red")
+        raise ValueError("Invalid response from LLM call - None or empty.")
+
+    formatted = agent_utils.format_answer(answer=answer)
+    if isinstance(formatted, agent_utils.AgentFinish):
+        return formatted
+    return agent_utils.AgentFinish(thought=formatted.thought, output=formatted.text, text=formatted.text)
+
+
+agent_utils.handle_max_iterations_exceeded = _handle_max_iterations_exceeded
+crew_agent_executor.handle_max_iterations_exceeded = _handle_max_iterations_exceeded
