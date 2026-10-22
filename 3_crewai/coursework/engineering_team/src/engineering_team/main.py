@@ -5,6 +5,7 @@ from datetime import datetime
 
 import engineering_team.patch  # noqa: F401 — applies CrewAI MCP monkey-patch on import
 from engineering_team.crew import EngineeringTeam
+from .tools.release_tools import init_version_files
 from .tools.sandbox_tools import SANDBOX_DIR, backup_sandbox, reset_sandbox
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
@@ -41,6 +42,7 @@ def run():
 
     try:
         reset_sandbox()
+        init_version_files("0.0.0")
         EngineeringTeam().crew().kickoff(inputs=inputs)
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
@@ -70,6 +72,7 @@ def change():
     backup = backup_sandbox()
     if backup:
         print(f"Copia del sandbox antes del cambio: {backup}")
+    init_version_files("1.0.0", "Versión inicial: estado de la aplicación anterior a la introducción del control de versiones.")
     inputs = {
         "cambio": request,
         "cambio_id": datetime.now().strftime("%Y%m%d_%H%M"),

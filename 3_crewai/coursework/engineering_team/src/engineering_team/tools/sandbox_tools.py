@@ -12,6 +12,8 @@ SANDBOX_DIR.mkdir(parents=True, exist_ok=True)
 
 # Project/build config the agents must not touch: it is only written by reset_sandbox.
 PROTECTED_FILES = {"pyproject.toml", "uv.lock", ".python-version"}
+# Readable by agents, but only the release tool may change them.
+RELEASE_FILES = {"version.py", "docs/versiones.md"}
 
 
 # Previous sandboxes are copied here (outside the sandbox, git-ignored) before every reset.
@@ -48,7 +50,7 @@ def reset_sandbox() -> None:
     subprocess.run(["uv", "init", "--bare", "--no-workspace", "--python", "3.13"], cwd=SANDBOX_DIR, check=True)
     subprocess.run(["uv", "add", "gradio"], cwd=SANDBOX_DIR, check=True)
 
-def _safe_path(filename: str) -> Path:
+def _safe_path(filename: str, for_write: bool = False) -> Path:
     """Resolve filename inside the sandbox, rejecting anything that escapes it."""
     base = SANDBOX_DIR.resolve()
     p = (base / filename).resolve()
@@ -56,6 +58,8 @@ def _safe_path(filename: str) -> Path:
         raise ValueError(f"Path escapes the sandbox: {filename}")
     if p.parent == base and p.name.lower() in PROTECTED_FILES:
         raise ValueError(f"Protected file, not accessible: {filename}")
+    if for_write and p.relative_to(base).as_posix().lower() in RELEASE_FILES:
+        raise ValueError(f"{filename} is managed by the Register Release tool and cannot be edited directly")
     return p
 
 
@@ -109,7 +113,7 @@ def write_sandbox_file(filename: str, content: str) -> str:
         A confirmation message.
     """
     try:
-        path = _safe_path(filename)
+        path = _safe_path(filename, for_write=True)
     except ValueError as e:
         return str(e)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -146,7 +150,7 @@ def replace_in_sandbox_file(filename: str, old_text: str, new_text: str) -> str:
         A confirmation, or the reason the edit was not applied.
     """
     try:
-        path = _safe_path(filename)
+        path = _safe_path(filename, for_write=True)
     except ValueError as e:
         return str(e)
     if not path.is_file():

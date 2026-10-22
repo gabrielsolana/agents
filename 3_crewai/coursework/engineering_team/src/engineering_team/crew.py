@@ -7,6 +7,7 @@ from .tools.sandbox_tools import (
     replace_in_sandbox_file, sandbox_tools, ux_tools, write_sandbox_file,
 )
 from .tools.cost_tools import cost_tools, mark_start, mark_task_done, register_crew
+from .tools.release_tools import release_tools, reset_release_flag
 # If you want to run a snippet of code before or after the crew starts,
 # you can use the @before_kickoff and @after_kickoff decorators
 # https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
@@ -34,7 +35,7 @@ class EngineeringTeam():
             config=self.agents_config['engineering_lead'],
             llm=_llm(STRONG_MODEL),
             verbose=True,
-            tools=ux_tools + cost_tools,
+            tools=ux_tools + cost_tools + release_tools,
             mcps=["https://mcp.context7.com/mcp"]
         )
 
@@ -169,6 +170,12 @@ class EngineeringTeam():
         )
 
     @task
+    def release_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['release_task'],
+        )
+
+    @task
     def cost_report_task(self) -> Task:
         return Task(
             config=self.tasks_config['cost_report_task'],
@@ -205,6 +212,12 @@ class EngineeringTeam():
         )
 
     @task
+    def change_release_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['change_release_task'],
+        )
+
+    @task
     def change_manual_task(self) -> Task:
         return Task(
             config=self.tasks_config['change_manual_task'],
@@ -228,7 +241,7 @@ class EngineeringTeam():
             process=Process.sequential,
             verbose=True,
             tracing=True,
-            before_kickoff_callbacks=[mark_start],
+            before_kickoff_callbacks=[mark_start, reset_release_flag],
             task_callback=mark_task_done,
         )
         register_crew(the_crew)

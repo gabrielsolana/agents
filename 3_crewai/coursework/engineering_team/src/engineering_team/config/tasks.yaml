@@ -35,6 +35,7 @@ frontend_task:
     Después escribe un script de validación independiente (p. ej. _validate.py) que importe app.py y confirme que el objeto Blocks se construye sin errores, y ejecútalo con tus herramientas del sandbox.
     IMPORTANTE: el script de validación NO debe llamar a `.launch()`, porque se bloquearía hasta agotar el tiempo. Solo debe importar e instanciar.
     app.py debe exponer un `demo` a nivel de módulo y lanzarlo únicamente bajo `if __name__ == "__main__"`.
+    Muestra la versión de la aplicación en la cabecera, leyéndola con `from version import __version__`; el archivo version.py lo crea y gestiona el sistema, no lo escribas ni lo edites.
     Estos son los requisitos: {requirements}
   expected_output: >
     Una interfaz gradio en el módulo app.py, escrita en el sandbox, que muestre la funcionalidad.
@@ -170,6 +171,23 @@ manual_task:
     - test_task
   output_file: sandbox/docs/manual_usuario.md
 
+release_task:
+  description: >
+    Registra la primera versión de la aplicación. Llama UNA sola vez a la herramienta Register Release con bump=major (la versión pasa de 0.0.0 a 1.0.0),
+    un resumen de una o dos frases y, en `added`, las funcionalidades principales de la aplicación (una frase corta orientada al usuario, en español,
+    basada en los requisitos y en lo que consta en el manual); `fixed` va vacío porque es la primera versión.
+    Reglas de versionado (MAYOR.MENOR.PARCHE): con funcionalidad nueva, bump=minor; solo con correcciones, bump=patch;
+    con un cambio incompatible (por ejemplo, en el formato de los datos guardados), bump=major. La herramienta calcula el número
+    y rechaza combinaciones incoherentes; no edites version.py ni docs/versiones.md a mano, no puedes.
+    Usa solo lo que consta en la documentación y en las revisiones; no inventes funciones.
+  expected_output: >
+    La confirmación de la herramienta con la versión registrada y el texto de la entrada del historial.
+  agent: engineering_lead
+  context:
+    - requirements_audit_task
+    - review_decision_task
+    - manual_task
+
 cost_report_task:
   description: >
     Mide el gasto real de esta ejecución y redacta un informe del coste total.
@@ -185,7 +203,7 @@ cost_report_task:
     la medición) y una advertencia de que es una estimación y no la factura de Console.
   agent: engineering_lead
   context:
-    - manual_task
+    - release_task
   output_file: sandbox/docs/informe_coste.md
 
 change_design_task:
@@ -221,7 +239,7 @@ change_code_task:
 change_frontend_task:
   description: >
     Adapta app.py SOLO a lo que el diseño del cambio te asigna, más cualquier ajuste que exijan los cambios de backend. La interfaz ya existe: no la recrees.
-    Lee primero app.py y modifícalo con Replace In Sandbox File. Mantén la paleta, el modo claro/oscuro, el `demo` a nivel de módulo
+    Lee primero app.py y modifícalo con Replace In Sandbox File. Si la cabecera aún no muestra la versión, añádela leyéndola con `from version import __version__` (version.py lo gestiona el sistema; no lo edites). Mantén la paleta, el modo claro/oscuro, el `demo` a nivel de módulo
     y el lanzamiento únicamente bajo `if __name__ == "__main__"`. Si hace falta, amplía _validate.py (sin llamar a `.launch()`) y ejecútalo.
     Las funciones nuevas deben cumplir los estándares (máximo 40 líneas, tipos y docstring); no refactorices lo que no tocas.
     Petición de cambio: {cambio}
@@ -264,6 +282,23 @@ change_audit_task:
     - change_test_task
   output_file: sandbox/docs/cambio_{cambio_id}_auditoria.md
 
+change_release_task:
+  description: >
+    Registra la nueva versión de la aplicación según el cambio realizado. Lee el informe de auditoría: si el veredicto es "no cumplido",
+    NO registres versión y explica por qué. En caso contrario, llama UNA sola vez a la herramienta Register Release con el bump que corresponda,
+    un resumen de una o dos frases, en `added` la funcionalidad nueva y en `fixed` las correcciones, cada una en una frase corta orientada
+    al usuario y en español, basadas solo en lo que consta en el diseño y en la auditoría.
+    Reglas de versionado (MAYOR.MENOR.PARCHE): con funcionalidad nueva, bump=minor; solo con correcciones, bump=patch;
+    con un cambio incompatible (por ejemplo, en el formato de los datos guardados), bump=major. La herramienta calcula el número
+    y rechaza combinaciones incoherentes; no edites version.py ni docs/versiones.md a mano, no puedes.
+    Petición de cambio: {cambio}
+  expected_output: >
+    La confirmación de la herramienta con la versión registrada y el texto de la entrada del historial, o la explicación de por qué no se registró.
+  agent: engineering_lead
+  context:
+    - change_design_task
+    - change_audit_task
+
 change_manual_task:
   description: >
     Actualiza el manual de usuario existente (docs/manual_usuario.md) para reflejar el cambio. Léelo primero y edítalo con Replace In Sandbox File,
@@ -276,6 +311,7 @@ change_manual_task:
   context:
     - change_design_task
     - change_frontend_task
+    - change_release_task
 
 change_cost_report_task:
   description: >
