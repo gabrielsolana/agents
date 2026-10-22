@@ -69,7 +69,7 @@ _last_call: tuple | None = None
 REPEATED_CALL_MESSAGE = (
     "Repeated call ignored: it is identical to the previous one and its result is already in the conversation above. "
     "Do not repeat it. To get different information change the arguments or use another tool "
-    "(Outline Sandbox File for structure, Search Sandbox with a `pattern` to locate code, Read Sandbox File with start_line/end_line)."
+    "(Outline Sandbox File for structure, Search Sandbox with a `regex` to locate code, Read Sandbox File with start_line/end_line)."
 )
 
 
@@ -231,25 +231,25 @@ def outline_sandbox_file(filename: str) -> str:
 
 @tool("Search Sandbox")
 @_no_immediate_repeat
-def search_sandbox(pattern: str = "", filename: str = "") -> str:
+def search_sandbox(regex: str = "", filename: str = "") -> str:
     """
     Search the sandbox with a regular expression and return the matching lines with their file and
     line number. Much cheaper than reading whole files to find where something is used.
 
     Args:
-        pattern: A Python regular expression (e.g. "def preview_recurring|_ACTIVE_STATUSES"). Required.
+        regex: A Python regular expression (e.g. "def preview_recurring|_ACTIVE_STATUSES"). Required.
             If you only want the structure of a file, use Outline Sandbox File instead.
         filename: Optional single file to search. Leave empty to search every text file in the sandbox.
     Returns:
         Up to 60 lines formatted as "file:line: text".
     """
-    if not pattern:
+    if not regex:
         if filename:
-            return ("No pattern was given, so here is the outline of the file instead. To search, pass a regular expression in "
-                    "`pattern`.\n" + _outline_text(filename))
-        return "Missing `pattern`: pass a regular expression to search for."
+            return ("No regex was given, so here is the outline of the file instead. To search, pass a regular expression in "
+                    "`regex`.\n" + _outline_text(filename))
+        return "Missing `regex`: pass a regular expression to search for."
     try:
-        regex = re.compile(pattern)
+        compiled = re.compile(regex)
     except re.error as exc:
         return f"Invalid regular expression: {exc}"
     try:
@@ -267,7 +267,7 @@ def search_sandbox(pattern: str = "", filename: str = "") -> str:
         if not path.is_file() or path.suffix not in SEARCHABLE_SUFFIXES or path.name in PROTECTED_FILES:
             continue
         for number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            if regex.search(line):
+            if compiled.search(line):
                 hits.append(f"{path.relative_to(SANDBOX_DIR).as_posix()}:{number}: {line.strip()[:160]}")
     if not hits:
         return "No matches."
