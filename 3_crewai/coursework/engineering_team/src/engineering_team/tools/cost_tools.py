@@ -25,9 +25,17 @@ def mark_start(inputs: dict | None = None) -> dict | None:
     return inputs
 
 
+# Tasks whose result is shown to the user as soon as they finish, with the banner to print above it.
+_ANNOUNCE = {"apply_decision_task": "RIESGO Y CAMBIOS PREVISTOS (el trabajo continúa a continuación)"}
+
+
 def mark_task_done(output) -> None:
-    """task_callback: record when each task finished and which agent ran it."""
-    _done.append((getattr(output, "name", None) or "?", str(getattr(output, "agent", "") or "?").strip(), time.time()))
+    """task_callback: record when each task finished and which agent ran it, and announce key results."""
+    name = getattr(output, "name", None) or "?"
+    _done.append((name, str(getattr(output, "agent", "") or "?").strip(), time.time()))
+    if name in _ANNOUNCE:
+        line = "=" * 78
+        print(f"\n{line}\n{_ANNOUNCE[name]}\n{line}\n{getattr(output, 'raw', '')}\n{line}\n", flush=True)
 
 
 def _fmt(seconds: float) -> str:

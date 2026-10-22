@@ -340,12 +340,18 @@ change_cost_report_task:
     Si algún modelo aparece como "sin tarifa", dilo claramente y no estimes su coste.
     La herramienta también da el tiempo de reloj: por tarea, por agente y total. Incluye ese tiempo en el informe, con las mismas
     reglas: solo las cifras de la herramienta, sin estimar nada por tu cuenta.
+    Termina con una sección de comentarios sobre el resultado, basada solo en los informes que ya constan: el informe de auditoría y la versión registrada
+    (te llegan como contexto). Si existe docs/aplicar_{cambio_id}_decision.md (ejecución de apply_review), léelo también para saber qué se aceptó y qué se rechazó.
   expected_output: >
     Un informe en markdown, en español: tabla de tokens y coste por agente y total (copiada de la herramienta), qué agentes o
     modelos concentran el gasto y en qué porcentaje, el tiempo total de la ejecución y la tabla de tiempo por tarea y por agente,
     qué falta por contabilizar y una advertencia de que es una estimación y no la factura de Console.
+    Cierra con una sección "Comentarios": qué se ha hecho, el veredicto de la auditoría y la versión registrada, las observaciones
+    importantes del auditor, lo que queda pendiente o se rechazó, y el siguiente paso que recomiendas.
   agent: engineering_lead
   context:
+    - change_audit_task
+    - change_release_task
     - change_manual_task
   output_file: sandbox/docs/cambio_{cambio_id}_informe_coste.md
 
@@ -369,8 +375,10 @@ apply_decision_task:
     la aplicación. Acepta como máximo {max_cambios} cambios en total, que sean independientes entre sí y estén ordenados de menor a mayor riesgo.
     Ningún cambio puede alterar firmas públicas usadas por app.py ni por las pruebas, salvo que el propio cambio incluya su adaptación.
     Asigna cada cambio aceptado a backend_engineer o frontend_engineer. No escribas código.
+    El documento empieza por un resumen previo que se mostrará al usuario antes de que empiece el trabajo: sé claro y concreto, sin tecnicismos innecesarios.
   expected_output: >
-    Un documento en markdown, en español, con dos secciones: "Aceptados" (id, hallazgo de origen, cambio concreto, responsable, cómo verificarlo)
-    y "Rechazados" (id, hallazgo de origen, motivo).
+    Un documento en markdown, en español. Empieza por la sección "Resumen previo" con: (1) "Riesgo global": bajo, medio o alto, con una o dos frases que expliquen por qué
+    y qué podría salir mal; (2) "Se va a corregir": una línea por cada cambio aceptado (id y qué se hace); (3) "No se tocará": cuántos hallazgos se rechazan y por qué, en una frase.
+    Después, las secciones "Aceptados" (id, hallazgo de origen, cambio concreto, riesgo, responsable, cómo verificarlo) y "Rechazados" (id, hallazgo de origen, motivo).
   agent: engineering_lead
   output_file: sandbox/docs/aplicar_{cambio_id}_decision.md

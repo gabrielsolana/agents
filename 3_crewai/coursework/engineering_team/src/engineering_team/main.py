@@ -55,6 +55,12 @@ def run():
         raise Exception(f"An error occurred while running the crew: {e}")
 
 
+def _print_final_report(result) -> None:
+    """Show the lead's closing report (cost, time and comments) at the end of the run."""
+    line = "=" * 78
+    print(f"\n{line}\nINFORME FINAL: coste, tiempo y comentarios\n{line}\n{result.raw}\n{line}\n", flush=True)
+
+
 def _read_change_request(argv: list[str]) -> str:
     """The change request comes from `--file <path>` or from the remaining arguments."""
     if argv[:1] == ["--file"]:
@@ -85,9 +91,10 @@ def change():
         "cambio_id": datetime.now().strftime("%Y%m%d_%H%M"),
     }
     try:
-        EngineeringTeam().change_crew().kickoff(inputs=inputs)
+        result = EngineeringTeam().change_crew().kickoff(inputs=inputs)
     except Exception as e:
         raise Exception(f"An error occurred while applying the change: {e}")
+    _print_final_report(result)
 
 
 DEFAULT_MAX_CHANGES = 5
@@ -145,9 +152,10 @@ def apply_review():
         ),
     }
     try:
-        EngineeringTeam().apply_review_crew().kickoff(inputs=inputs)
+        result = EngineeringTeam().apply_review_crew().kickoff(inputs=inputs)
     except Exception as e:
         raise Exception(f"An error occurred while applying the review: {e}")
+    _print_final_report(result)
 
 
 def review():
