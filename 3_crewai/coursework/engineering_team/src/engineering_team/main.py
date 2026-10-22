@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import warnings
+from pathlib import Path
 from datetime import datetime
 
 import engineering_team.patch  # noqa: F401 — applies CrewAI MCP monkey-patch on import
@@ -81,6 +82,81 @@ def change():
         EngineeringTeam().change_crew().kickoff(inputs=inputs)
     except Exception as e:
         raise Exception(f"An error occurred while applying the change: {e}")
+
+
+DEFAULT_MAX_CHANGES = 5
+
+
+def _resolve_review_file(argument: str) -> str:
+    """Path of a review report relative to the sandbox, accepted as given, inside docs/, or absolute."""
+    sandbox = SANDBOX_DIR.resolve()
+    given = Path(argument)
+    for candidate in (given, sandbox / given, sandbox / "docs" / given):
+        resolved = candidate.resolve()
+        if resolved.is_file() and resolved.suffix == ".md" and resolved.is_relative_to(sandbox):
+            return resolved.relative_to(sandbox).as_posix()
+    raise SystemExit(f"No encuentro el informe {argument!r} dentro del sandbox (ni en docs/).")
+
+
+def _parse_apply_args(argv: list[str]) -> tuple[str, int]:
+    """`apply_review <informe> [--max N]` -> (informe, N)."""
+    max_changes, rest = DEFAULT_MAX_CHANGES, list(argv)
+    if "--max" in rest:
+        i = rest.index("--max")
+        try:
+            max_changes = int(rest[i + 1])
+        except (IndexError, ValueError):
+            raise SystemExit("Uso: apply_review <informe> [--max N]")
+        del rest[i:i + 2]
+    if len(rest) != 1 or max_changes < 1:
+        raise SystemExit("Uso: apply_review <informe> [--max N]   (por ejemplo: apply_review docs/code_review_20261022_1703.md)")
+    return rest[0], max_changes
+
+
+def apply_review():
+    """
+    Apply the findings of a review report to the application already in the sandbox:
+    the lead accepts or rejects them, then the change pipeline implements the accepted ones.
+    Usage: apply_review docs/code_review_<fecha>.md [--max N]
+    """
+    argument, max_changes = _parse_apply_args(sys.argv[1:])
+    if not (SANDBOX_DIR / "app.py").is_file():
+        raise SystemExit("No hay una aplicación en el sandbox (falta app.py). Usa run_crew para construirla primero.")
+    review_file = _resolve_review_file(argument)
+
+    backup = backup_sandbox()
+    if backup:
+        print(f"Copia del sandbox antes de aplicar la revisión: {backup}")
+    init_version_files("1.0.0", "Versión inicial: estado de la aplicación anterior a la introducción del control de versiones.")
+    cambio_id = datetime.now().strftime("%Y%m%d_%H%M")
+    inputs = {
+        "review_file": review_file,
+        "max_cambios": max_changes,
+        "cambio_id": cambio_id,
+        "cambio": (
+            f"Aplica SOLO los cambios aceptados (sección «Aceptados») del documento docs/aplicar_{cambio_id}_decision.md, "
+            f"que sale de la revisión {review_file}. No hagas nada de la sección «Rechazados» ni nada que no figure en los aceptados."
+        ),
+    }
+    try:
+        EngineeringTeam().apply_review_crew().kickoff(inputs=inputs)
+    except Exception as e:
+        raise Exception(f"An error occurred while applying the review: {e}")
+
+
+def review():
+    """
+    Run only the code reviewer on the application already in the sandbox (no rebuild, no changes).
+    Usage: review_code
+    """
+    if not (SANDBOX_DIR / "app.py").is_file():
+        raise SystemExit("No hay una aplicación en el sandbox (falta app.py). Usa run_crew para construirla primero.")
+    inputs = {"review_id": datetime.now().strftime("%Y%m%d_%H%M")}
+    try:
+        result = EngineeringTeam().review_crew().kickoff(inputs=inputs)
+    except Exception as e:
+        raise Exception(f"An error occurred while reviewing the code: {e}")
+    print(f"Tokens usados: {result.token_usage}")
 
 
 def train():

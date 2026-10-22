@@ -64,12 +64,14 @@ def _bullets(items: list[str]) -> str:
     return "\n".join(f"- {i}" for i in clean) if clean else "- (ninguna)"
 
 
-def _entry(version: str, summary: str, added: list[str], fixed: list[str]) -> str:
+def _entry(version: str, summary: str, added: list[str], fixed: list[str], improved: list[str] | None = None) -> str:
+    internal = f"\n### Mejoras internas\n{_bullets(improved)}\n" if improved and any(i.strip() for i in improved) else ""
     return (
         f"## v{version} — {datetime.now().strftime('%Y-%m-%d')}\n\n"
         f"{summary.strip()}\n\n"
         f"### Nueva funcionalidad\n{_bullets(added)}\n\n"
         f"### Correcciones\n{_bullets(fixed)}\n"
+        f"{internal}"
     )
 
 
@@ -100,9 +102,12 @@ def next_version(current: str, bump: str) -> str:
     return f"{major}.{minor}.{patch + 1}"
 
 
-def _release_problem(current: str | None, bump: str, summary: str, added: list[str], fixed: list[str]) -> str | None:
+def _release_problem(
+    current: str | None, bump: str, summary: str, added: list[str], fixed: list[str], improved: list[str]
+) -> str | None:
     """Why a release request is invalid, or None if it is consistent."""
     has_added, has_fixed = any(i.strip() for i in added), any(i.strip() for i in fixed)
+    has_improved = any(i.strip() for i in improved)
     if _released_in_this_run:
         return "Ya se registró una versión en esta ejecución; no se registra otra."
     if current is None:
@@ -111,8 +116,8 @@ def _release_problem(current: str | None, bump: str, summary: str, added: list[s
         return f"bump debe ser uno de {BUMPS}."
     if not summary.strip():
         return "Falta el resumen de la versión."
-    if not (has_added or has_fixed):
-        return "Indica al menos una novedad o una corrección."
+    if not (has_added or has_fixed or has_improved):
+        return "Indica al menos una novedad, una corrección o una mejora interna."
     if has_added and bump == "patch":
         return "Una funcionalidad nueva exige subir como mínimo la versión MENOR (bump=minor)."
     if not has_added and bump != "patch":
@@ -121,7 +126,9 @@ def _release_problem(current: str | None, bump: str, summary: str, added: list[s
 
 
 @tool("Register Release")
-def register_release(bump: str, summary: str, added: list[str], fixed: list[str]) -> str:
+def register_release(
+    bump: str, summary: str, added: list[str], fixed: list[str], improved: list[str] | None = None
+) -> str:
     """
     Register a new version of the application: it raises the version number in version.py and
     adds an entry at the top of docs/versiones.md. These files can only be changed with this tool.
@@ -133,6 +140,8 @@ def register_release(bump: str, summary: str, added: list[str], fixed: list[str]
         summary: One or two sentences, in Spanish, describing the version for a non-technical reader.
         added: New functionality, one short user-oriented sentence per item, in Spanish (empty list if none).
         fixed: Bugs fixed, one short user-oriented sentence per item, in Spanish (empty list if none).
+        improved: Internal improvements that do not change what the user sees or does (refactors, tests,
+            documentation, code quality), one short sentence per item, in Spanish. They only justify a "patch" bump.
     Returns:
         The new version, or the reason it was not registered.
     """
@@ -142,13 +151,14 @@ def register_release(bump: str, summary: str, added: list[str], fixed: list[str]
         _changelog_path()
     except ValueError as exc:
         return f"No registrada: {exc}"
-    problem = _release_problem(current, bump, summary, added, fixed)
+    improved = improved or []
+    problem = _release_problem(current, bump, summary, added, fixed, improved)
     if problem:
         return f"No registrada: {problem}"
     version = next_version(current, bump)
     try:
         _write_version(version)
-        _insert_entry(_entry(version, summary, added, fixed))
+        _insert_entry(_entry(version, summary, added, fixed, improved))
     except ValueError as exc:
         return f"No registrada: {exc}"
     _released_in_this_run = True

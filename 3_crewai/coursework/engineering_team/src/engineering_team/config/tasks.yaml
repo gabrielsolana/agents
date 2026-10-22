@@ -192,8 +192,9 @@ release_task:
     Registra la primera versión de la aplicación. Llama UNA sola vez a la herramienta Register Release con bump=major (la versión pasa de 0.0.0 a 1.0.0),
     un resumen de una o dos frases y, en `added`, las funcionalidades principales de la aplicación (una frase corta orientada al usuario, en español,
     basada en los requisitos y en lo que consta en el manual); `fixed` va vacío porque es la primera versión.
-    Reglas de versionado (MAYOR.MENOR.PARCHE): con funcionalidad nueva, bump=minor; solo con correcciones, bump=patch;
-    con un cambio incompatible (por ejemplo, en el formato de los datos guardados), bump=major. La herramienta calcula el número
+    Reglas de versionado (MAYOR.MENOR.PARCHE): con funcionalidad nueva, bump=minor; solo con correcciones o mejoras internas, bump=patch;
+    con un cambio incompatible (por ejemplo, en el formato de los datos guardados), bump=major. Las refactorizaciones, pruebas y mejoras de calidad
+    que no cambian lo que ve o hace el usuario van en `improved`. La herramienta calcula el número
     y rechaza combinaciones incoherentes; no edites version.py ni docs/versiones.md a mano, no puedes.
     Usa solo lo que consta en la documentación y en las revisiones; no inventes funciones.
   expected_output: >
@@ -304,8 +305,9 @@ change_release_task:
     NO registres versión y explica por qué. En caso contrario, llama UNA sola vez a la herramienta Register Release con el bump que corresponda,
     un resumen de una o dos frases, en `added` la funcionalidad nueva y en `fixed` las correcciones, cada una en una frase corta orientada
     al usuario y en español, basadas solo en lo que consta en el diseño y en la auditoría.
-    Reglas de versionado (MAYOR.MENOR.PARCHE): con funcionalidad nueva, bump=minor; solo con correcciones, bump=patch;
-    con un cambio incompatible (por ejemplo, en el formato de los datos guardados), bump=major. La herramienta calcula el número
+    Reglas de versionado (MAYOR.MENOR.PARCHE): con funcionalidad nueva, bump=minor; solo con correcciones o mejoras internas, bump=patch;
+    con un cambio incompatible (por ejemplo, en el formato de los datos guardados), bump=major. Las refactorizaciones, pruebas y mejoras de calidad
+    que no cambian lo que ve o hace el usuario van en `improved`. La herramienta calcula el número
     y rechaza combinaciones incoherentes; no edites version.py ni docs/versiones.md a mano, no puedes.
     Petición de cambio: {cambio}
   expected_output: >
@@ -320,6 +322,7 @@ change_manual_task:
     Actualiza el manual de usuario existente (docs/manual_usuario.md) para reflejar el cambio. Léelo primero y edítalo con Replace In Sandbox File,
     modificando o añadiendo solo las secciones afectadas; si no existe, créalo con Write Sandbox File. Cita los nombres de pestañas, botones y campos
     exactamente y confírmalos con inspect_gradio_layout. No describas nada que no hayas comprobado.
+    Si el cambio no altera lo que el usuario ve o hace (por ejemplo, una refactorización), no modifiques el manual y dilo.
     Petición de cambio: {cambio}
   expected_output: >
     Una lista breve de las secciones del manual que se han modificado o añadido.
@@ -345,3 +348,29 @@ change_cost_report_task:
   context:
     - change_manual_task
   output_file: sandbox/docs/cambio_{cambio_id}_informe_coste.md
+
+solo_code_review_task:
+  description: >
+    Revisa la calidad y la mantenibilidad del código que YA EXISTE en el sandbox (backend, app.py y pruebas). No hay otras tareas previas en esta ejecución:
+    lista los archivos, lee el código y, si existe docs/design.md, léelo para conocer el diseño. Ejecuta Check Code Quality.
+    No modifiques nada: tu informe es la entrega.
+  expected_output: >
+    Una revisión en español, en markdown: un veredicto general breve y una lista de hallazgos ordenados por prioridad (alta / media / baja), cada uno con
+    archivo y función o clase, problema, cambio propuesto, riesgo de regresión (bajo / medio / alto) y responsable (backend_engineer o frontend_engineer).
+  agent: code_reviewer
+  output_file: sandbox/docs/code_review_{review_id}.md
+
+apply_decision_task:
+  description: >
+    Se ha hecho una revisión del sistema y hay que decidir qué hallazgos se aplican. El informe está en el sandbox: {review_file}
+    Léelo, y lee el código al que se refiere (backend, app.py y las pruebas) para valorar la viabilidad y el riesgo de cada hallazgo.
+    Para cada hallazgo, ACÉPTALO o RECHÁZALO con una razón de una línea. Acepta solo lo que mejore de verdad la mantenibilidad o corrija un error,
+    y que tenga riesgo de regresión bajo o esté protegido por pruebas existentes. Rechaza gustos, trivialidades y todo lo que exija rehacer
+    la aplicación. Acepta como máximo {max_cambios} cambios en total, que sean independientes entre sí y estén ordenados de menor a mayor riesgo.
+    Ningún cambio puede alterar firmas públicas usadas por app.py ni por las pruebas, salvo que el propio cambio incluya su adaptación.
+    Asigna cada cambio aceptado a backend_engineer o frontend_engineer. No escribas código.
+  expected_output: >
+    Un documento en markdown, en español, con dos secciones: "Aceptados" (id, hallazgo de origen, cambio concreto, responsable, cómo verificarlo)
+    y "Rechazados" (id, hallazgo de origen, motivo).
+  agent: engineering_lead
+  output_file: sandbox/docs/aplicar_{cambio_id}_decision.md

@@ -197,6 +197,18 @@ class EngineeringTeam():
         )
 
     @task
+    def apply_decision_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['apply_decision_task'],
+        )
+
+    @task
+    def solo_code_review_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['solo_code_review_task'],
+        )
+
+    @task
     def change_design_task(self) -> Task:
         return Task(
             config=self.tasks_config['change_design_task'],
@@ -244,15 +256,19 @@ class EngineeringTeam():
             config=self.tasks_config['change_cost_report_task'],
         )
 
-    def _tasks(self, change: bool) -> list[Task]:
-        """The new-build pipeline excludes the change_* tasks; the change pipeline is only those."""
-        return [t for t in self.tasks if (t.name or "").startswith("change_") == change]
+    _PIPELINE_PREFIXES = ("change_", "solo_", "apply_")
 
-    def _build_crew(self, agents: list[BaseAgent], change: bool) -> Crew:
+    def _tasks(self, prefix: str | tuple[str, ...] | None) -> list[Task]:
+        """Tasks of one pipeline: those starting with `prefix`, or the new-build ones when prefix is None."""
+        if prefix is None:
+            return [t for t in self.tasks if not (t.name or "").startswith(self._PIPELINE_PREFIXES)]
+        return [t for t in self.tasks if (t.name or "").startswith(prefix)]
+
+    def _build_crew(self, agents: list[BaseAgent], prefix: str | tuple[str, ...] | None) -> Crew:
         the_crew = Crew(
             agents=agents,
             manager_agent=self.engineering_lead(),
-            tasks=self._tasks(change),
+            tasks=self._tasks(prefix),
             process=Process.sequential,
             verbose=True,
             tracing=True,
@@ -270,7 +286,7 @@ class EngineeringTeam():
                 self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
                 self.ux_reviewer(), self.fiscal_reviewer(), self.requirements_auditor(), self.code_reviewer(), self.manual_writer(),
             ],
-            change=False,
+            prefix=None,
         )
 
     @crew_decorator
@@ -281,5 +297,21 @@ class EngineeringTeam():
                 self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
                 self.requirements_auditor(), self.manual_writer(),
             ],
-            change=True,
+            prefix="change_",
         )
+
+    @crew_decorator
+    def apply_review_crew(self) -> Crew:
+        """Creates the crew that applies the findings of a review: the lead filters them, then the change pipeline runs"""
+        return self._build_crew(
+            [
+                self.backend_engineer(), self.frontend_engineer(), self.test_engineer(),
+                self.requirements_auditor(), self.manual_writer(),
+            ],
+            prefix=("apply_", "change_"),
+        )
+
+    @crew_decorator
+    def review_crew(self) -> Crew:
+        """Creates the crew that only reviews the code already in the sandbox"""
+        return self._build_crew([self.code_reviewer()], prefix="solo_")
