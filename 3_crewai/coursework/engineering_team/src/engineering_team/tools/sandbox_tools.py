@@ -139,18 +139,8 @@ def read_sandbox_file(filename: str, start_line: int = 0, end_line: int = 0) -> 
     return "\n".join(f"{n}: {lines[n - 1]}" for n in range(first, last + 1))
 
 
-@tool("Outline Sandbox File")
-def outline_sandbox_file(filename: str) -> str:
-    """
-    Show the structure of a file without reading it all: for Python, every class, function and
-    method with its line range; for markdown, every heading with its line number. Use it first on
-    large files, then read only the ranges you need with Read Sandbox File.
-
-    Args:
-        filename: The Python (.py) or markdown (.md) file to outline (e.g. "accounting.py").
-    Returns:
-        An indented outline with line numbers.
-    """
+def _outline_text(filename: str) -> str:
+    """Structure of a .py or .md file as indented text with line numbers."""
     try:
         path = _safe_path(filename)
     except ValueError as e:
@@ -183,18 +173,39 @@ def outline_sandbox_file(filename: str) -> str:
     return "\n".join(shown) or "No classes or functions found."
 
 
+@tool("Outline Sandbox File")
+def outline_sandbox_file(filename: str) -> str:
+    """
+    Show the structure of a file without reading it all: for Python, every class, function and
+    method with its line range; for markdown, every heading with its line number. Use it first on
+    large files, then read only the ranges you need with Read Sandbox File.
+
+    Args:
+        filename: The Python (.py) or markdown (.md) file to outline (e.g. "accounting.py").
+    Returns:
+        An indented outline with line numbers.
+    """
+    return _outline_text(filename)
+
+
 @tool("Search Sandbox")
-def search_sandbox(pattern: str, filename: str = "") -> str:
+def search_sandbox(pattern: str = "", filename: str = "") -> str:
     """
     Search the sandbox with a regular expression and return the matching lines with their file and
     line number. Much cheaper than reading whole files to find where something is used.
 
     Args:
-        pattern: A Python regular expression (e.g. "def preview_recurring|_ACTIVE_STATUSES").
+        pattern: A Python regular expression (e.g. "def preview_recurring|_ACTIVE_STATUSES"). Required.
+            If you only want the structure of a file, use Outline Sandbox File instead.
         filename: Optional single file to search. Leave empty to search every text file in the sandbox.
     Returns:
         Up to 60 lines formatted as "file:line: text".
     """
+    if not pattern:
+        if filename:
+            return ("No pattern was given, so here is the outline of the file instead. To search, pass a regular expression in "
+                    "`pattern`.\n" + _outline_text(filename))
+        return "Missing `pattern`: pass a regular expression to search for."
     try:
         regex = re.compile(pattern)
     except re.error as exc:
