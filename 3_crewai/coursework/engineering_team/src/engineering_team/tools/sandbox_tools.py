@@ -1,5 +1,6 @@
 from crewai.tools import tool
 from pathlib import Path
+import ast
 import base64
 import shutil
 import subprocess
@@ -233,9 +234,121 @@ def inspect_gradio_layout() -> str:
     return result.stdout or "(empty layout)"
 
 
-sandbox_tools = [list_sandbox_files, read_sandbox_file, write_sandbox_file, run_sandbox_python]
+# ---------------------------------------------------------------------------
+# Static code-quality gate (reads and parses the code; never executes it)
+# ---------------------------------------------------------------------------
+MAX_FUNCTION_LINES = 40
+MAX_COMPLEXITY = 10
+MAX_REPORTED_ISSUES = 40
+
+_BRANCH_NODES = (ast.If, ast.For, ast.While, ast.ExceptHandler, ast.BoolOp, ast.IfExp, ast.comprehension)
+_FUNCTION_NODES = (ast.FunctionDef, ast.AsyncFunctionDef)
+
+
+def _complexity(fn: ast.AST) -> int:
+    """Approximate cyclomatic complexity of a function, not counting nested functions."""
+    total, stack = 1, list(ast.iter_child_nodes(fn))
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (*_FUNCTION_NODES, ast.Lambda, ast.ClassDef)):
+            continue
+        total += isinstance(node, _BRANCH_NODES)
+        stack.extend(ast.iter_child_nodes(node))
+    return total
+
+
+def _public_api(body: list) -> list:
+    """Public classes, functions and methods (names without a leading underscore)."""
+    found = []
+    for node in body:
+        if isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
+            found.append(node)
+            found.extend(_public_api(node.body))
+        elif isinstance(node, _FUNCTION_NODES) and not node.name.startswith("_"):
+            found.append(node)
+    return found
+
+
+def _missing_annotations(fn: ast.AST) -> list[str]:
+    args = [*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs]
+    missing = [a.arg for a in args if a.annotation is None and a.arg not in ("self", "cls")]
+    if fn.returns is None:
+        missing.append("retorno")
+    return missing
+
+
+def _quality_issues(source: str) -> list[tuple[int, str]]:
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, RecursionError, ValueError) as exc:
+        return [(0, f"no se puede analizar el archivo: {exc}")]
+    issues = []
+    for node in _public_api(tree.body):
+        if not ast.get_docstring(node):
+            issues.append((node.lineno, f"{node.name}: falta docstring"))
+        if isinstance(node, _FUNCTION_NODES):
+            missing = _missing_annotations(node)
+            if missing:
+                issues.append((node.lineno, f"{node.name}: faltan anotaciones de tipo ({', '.join(missing)})"))
+    for node in ast.walk(tree):
+        if not isinstance(node, _FUNCTION_NODES):
+            continue
+        length = node.end_lineno - node.lineno + 1
+        if length > MAX_FUNCTION_LINES:
+            issues.append((node.lineno, f"{node.name}: {length} líneas (máximo {MAX_FUNCTION_LINES})"))
+        complexity = _complexity(node)
+        if complexity > MAX_COMPLEXITY:
+            issues.append((node.lineno, f"{node.name}: complejidad {complexity} (máximo {MAX_COMPLEXITY})"))
+    return sorted(issues)
+
+
+@tool("Check Code Quality")
+def check_code_quality(filename: str = "") -> str:
+    """
+    Statically check the Python code of the sandbox against the team's quality standards:
+    functions/methods of at most 40 lines, cyclomatic complexity of at most 10, a docstring on
+    every public class, function and method, and type annotations on all parameters and return
+    values of public functions. The code is parsed, never executed.
+
+    Run it before declaring any code task finished, and keep fixing until the result is PASS.
+    Test files and scratch scripts (names starting with "test_" or "_") are not checked.
+
+    Args:
+        filename: A single .py file to check (e.g. "accounting.py"). Leave empty to check every
+            module in the sandbox (e.g. accounting.py and app.py).
+    Returns:
+        PASS or FAIL, and the list of violations as "file:line name: problem".
+    """
+    try:
+        if filename:
+            files = [_safe_path(filename)]
+        else:
+            files = sorted(
+                p for p in SANDBOX_DIR.glob("*.py")
+                if not p.name.startswith(("test_", "_"))
+            )
+    except ValueError as exc:
+        return str(exc)
+    files = [p for p in files if p.is_file() and not p.is_symlink()]
+    if not files:
+        return "No hay archivos .py que comprobar en el sandbox."
+    lines = []
+    for path in files:
+        for lineno, message in _quality_issues(path.read_text(encoding="utf-8", errors="replace")):
+            lines.append(f"{path.name}:{lineno} {message}")
+    header = f"Archivos comprobados: {', '.join(p.name for p in files)}"
+    limits = f"Límites: {MAX_FUNCTION_LINES} líneas por función, complejidad {MAX_COMPLEXITY}, docstring y tipos en lo público."
+    if not lines:
+        return f"PASS\n{header}\n{limits}"
+    shown = lines[:MAX_REPORTED_ISSUES]
+    extra = len(lines) - len(shown)
+    tail = [f"... y {extra} más (corrige estos y vuelve a ejecutar)."] if extra else []
+    return "\n".join([f"FAIL: {len(lines)} problema(s)", header, limits, *shown, *tail])
+
+
+sandbox_tools = [list_sandbox_files, read_sandbox_file, write_sandbox_file, run_sandbox_python, check_code_quality]
 # Read-only view of the sandbox (+ layout inspection) for reviewers and the manual writer.
-ux_tools = [list_sandbox_files, read_sandbox_file, inspect_gradio_layout]
+ux_tools = [list_sandbox_files, read_sandbox_file, inspect_gradio_layout, check_code_quality]
 
 
 def _never_cache(*_args, **_kwargs) -> bool:

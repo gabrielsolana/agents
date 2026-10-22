@@ -23,6 +23,7 @@ code_task:
   expected_output: >
     Archivos Python escritos en el sandbox y probados que implementen el diseño y cumplan los requisitos.
     IMPORTANTE: Usa tus herramientas del sandbox para escribir y comprobar el código.
+    La herramienta Check Code Quality debe dar PASS sobre el backend.
   agent: backend_engineer
   context:
     - design_task
@@ -39,6 +40,7 @@ frontend_task:
     Una interfaz gradio en el módulo app.py, escrita en el sandbox, que muestre la funcionalidad.
     El archivo debe quedar listo para ejecutarse tal cual, en el mismo directorio del sandbox que el código del backend.
     IMPORTANTE: Usa tus herramientas del sandbox para escribir y comprobar el código.
+    La herramienta Check Code Quality debe dar PASS sobre app.py.
   agent: frontend_engineer
   context:
     - code_task
@@ -113,6 +115,7 @@ backend_fix_task:
     Si no hay cambios de backend, no hagas nada y indícalo.
   expected_output: >
     Una lista breve de los cambios de backend aplicados y el resultado de las comprobaciones que se volvieron a ejecutar. Usa tus herramientas del sandbox.
+    Check Code Quality debe seguir dando PASS.
   agent: backend_engineer
   context:
     - review_decision_task
@@ -127,6 +130,7 @@ ux_revision_task:
     Estos son los requisitos: {requirements}
   expected_output: >
     Una lista breve de los cambios de frontend aplicados y el resultado correcto del script de validación.
+    Check Code Quality debe seguir dando PASS sobre app.py.
   agent: frontend_engineer
   context:
     - review_decision_task
@@ -141,6 +145,7 @@ test_task:
     Sigue trabajando hasta que todas las pruebas unitarias pasen.
     Si cambias código del backend, asegúrate de que las pruebas unitarias pasan y de que la aplicación gradio de app.py seguirá funcionando.
     Evita hacer cambios que puedan romper la aplicación gradio de app.py.
+    Al terminar, ejecuta Check Code Quality sobre todo el sandbox; si falla por algo que tú has cambiado, corrígelo.
   expected_output: >
     Un único archivo de pruebas que se pueda ejecutar para probar el módulo de backend.
     IMPORTANTE: Usa tus herramientas del sandbox para escribir y ejecutar las pruebas unitarias.
