@@ -1,0 +1,19 @@
+# Tarifas en USD por MILLÓN de tokens, para estimar el coste de una ejecución del crew.
+# Rellénalas con la página de precios de Anthropic (no las he rellenado yo: no las he verificado).
+# Mientras un valor sea null, el informe de coste mostrará "sin tarifa" para ese modelo.
+#   entrada:         tokens de entrada normales
+#   salida:          tokens de salida
+#   lectura_cache:   tokens de entrada leídos de la caché de prompts
+#   escritura_cache: tokens de entrada escritos en la caché de prompts
+# La clave es el id exacto del modelo tal como lo usa crew.py.
+modelos:
+  anthropic/claude-fable-5-1:
+    entrada: 10
+    salida: 50
+    lectura_cache: 0.25
+    escritura_cache: 12.50   # caché de 5 min (1 h: 20)
+  anthropic/claude-sonnet-5-5:
+    entrada: 2
+    salida: 10
+    lectura_cache: 0.10
+    escritura_cache: 2.50    # caché de 5 min (1 h: 4)

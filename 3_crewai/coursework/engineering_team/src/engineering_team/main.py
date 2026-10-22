@@ -27,6 +27,7 @@ El sistema debe poder informar del saldo de IVA de un periodo (IVA repercutido e
 El sistema debe poder informar de los ingresos y la rentabilidad por cliente y por proyecto, incluyendo el coste de uso de APIs de LLM asociado a cada proyecto.
 El sistema debe poder listar todas las transacciones (facturas, cobros y gastos) a lo largo del tiempo, filtradas por rango de fechas, cliente o categoría.
 El sistema debe impedir operaciones inválidas: cobrar más del importe pendiente de una factura, modificar o borrar una factura emitida (solo se puede anular mediante una factura rectificativa), importes negativos o cero, y registrar operaciones para clientes inexistentes.
+Principio de usabilidad de la interfaz: en cada pestaña el listado (por ejemplo, la cartera de clientes) es el elemento central y ocupa la mayor parte de la pantalla; los formularios de alta se abren mediante un botón (por ejemplo, "Nuevo cliente") en lugar de estar siempre visibles.
 """
 
 

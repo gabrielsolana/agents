@@ -1,61 +1,183 @@
 design_task:
   description: >
-    Take the high level requirements described here and prepare a detailed design for the engineering team;
-    Here are the requirements: {requirements}
-    IMPORTANT: Only output the design in markdown format, laying out the module(s), classes, functions.
-    Do not actually write any code. Function or method signatures only.
-    You should assign work to the following engineers: backend_engineer, frontend_engineer, test_engineer.
-    The backend_engineer should write the backend python code.
-    The frontend_engineer should make a gradio app.
-    The test_engineer should write unit tests for the backend module.
-    All engineers will be working in the same sandbox directory. There is no directory structure, all files are in the same directory.
-    Everything runs in a uv project with gradio installed.
+    Toma los requisitos de alto nivel descritos aquí y prepara un diseño detallado para el equipo de ingeniería;
+    Estos son los requisitos: {requirements}
+    IMPORTANTE: Entrega únicamente el diseño en formato markdown, exponiendo el/los módulo(s), clases y funciones.
+    No escribas código. Solo firmas de funciones o métodos.
+    Debes asignar trabajo a los siguientes ingenieros: backend_engineer, frontend_engineer, test_engineer.
+    El backend_engineer debe escribir el código Python del backend.
+    El frontend_engineer debe crear una aplicación gradio.
+    El test_engineer debe escribir pruebas unitarias del módulo de backend.
+    Todos los ingenieros trabajarán en el mismo directorio del sandbox. No hay estructura de directorios; todos los archivos están en el mismo directorio.
+    Todo se ejecuta en un proyecto uv con gradio instalado.
   expected_output: >
-    A detailed design to achieve the requirements, identifying code structure, and assignments to the engineers.
+    Un diseño detallado para cumplir los requisitos, que identifique la estructura del código y las asignaciones a los ingenieros.
   agent: engineering_lead
   output_file: sandbox/design.md
 
 code_task:
   description: >
-    Write a python code that implements the design described by the engineering lead, in order to achieve the requirements.
-    Here are the requirements: {requirements}
+    Escribe código Python que implemente el diseño descrito por el líder de ingeniería, para cumplir los requisitos.
+    Estos son los requisitos: {requirements}
   expected_output: >
-    Python files written to the sandbox and tested that implement the design and achieve the requirements.
-    IMPORTANT: Use your sandbox tools to write and check the code.
+    Archivos Python escritos en el sandbox y probados que implementen el diseño y cumplan los requisitos.
+    IMPORTANTE: Usa tus herramientas del sandbox para escribir y comprobar el código.
   agent: backend_engineer
   context:
     - design_task
 
 frontend_task:
   description: >
-    Write a gradio UI in a module app.py that demonstrates the backend code, as described in the design.
-    Assume there is only 1 user, and have the UI be professional, polished, clean.
-    Then write a separate validation script (e.g. _validate.py) that imports app.py and confirms the Blocks object constructs without error, and run it via your sandbox tools.
-    IMPORTANT: the validation script must NOT call `.launch()` — that would block until timeout. Just import and instantiate.
-    Here are the requirements: {requirements}
+    Escribe una interfaz gradio en un módulo app.py que muestre el código del backend, tal como se describe en el diseño.
+    Supón que hay un solo usuario y que la interfaz debe ser profesional, cuidada y limpia.
+    Después escribe un script de validación independiente (p. ej. _validate.py) que importe app.py y confirme que el objeto Blocks se construye sin errores, y ejecútalo con tus herramientas del sandbox.
+    IMPORTANTE: el script de validación NO debe llamar a `.launch()`, porque se bloquearía hasta agotar el tiempo. Solo debe importar e instanciar.
+    app.py debe exponer un `demo` a nivel de módulo y lanzarlo únicamente bajo `if __name__ == "__main__"`.
+    Estos son los requisitos: {requirements}
   expected_output: >
-    A gradio UI in module app.py written to the sandbox that demonstrates the functionality.
-    The file should be ready so that it can be run as-is, in the same sandbox directory as the backend code.
-    IMPORTANT: Use your sandbox tools to write and check the code.
+    Una interfaz gradio en el módulo app.py, escrita en el sandbox, que muestre la funcionalidad.
+    El archivo debe quedar listo para ejecutarse tal cual, en el mismo directorio del sandbox que el código del backend.
+    IMPORTANTE: Usa tus herramientas del sandbox para escribir y comprobar el código.
   agent: frontend_engineer
   context:
     - code_task
     - design_task
 
+ux_review_task:
+  description: >
+    Revisa la aplicación Gradio (app.py) como el dueño del negocio que la usará cada día.
+    Usa inspect_gradio_layout y lee el código. Cubre todas las pestañas. Recuerda el principio: en cada pestaña el listado es el
+    elemento central y los formularios de alta se alcanzan mediante un botón (o acordeón/modal), sin ocupar la mitad de la pantalla.
+    Estos son los requisitos: {requirements}
+  expected_output: >
+    Una revisión en español, en markdown: primero un breve veredicto general y después una tabla o lista de observaciones ordenadas por prioridad
+    (alta / media / baja), cada una con pestaña, problema y el cambio concreto propuesto.
+  agent: ux_reviewer
+  context:
+    - design_task
+    - frontend_task
+  output_file: sandbox/ux_review.md
+
+fiscal_review_task:
+  description: >
+    Revisa el backend en cuanto a corrección contable y del IVA español, escribiendo y ejecutando comprobaciones de escenarios con
+    valores esperados calculados a mano. No modifiques el backend.
+    Estos son los requisitos: {requirements}
+  expected_output: >
+    Un informe en español, en markdown: escenarios probados, valor esperado frente a valor obtenido en cada uno, y la lista de discrepancias
+    ordenadas por gravedad. Si todo es correcto, indica qué escenarios respaldan esa conclusión.
+  agent: fiscal_reviewer
+  context:
+    - design_task
+    - code_task
+  output_file: sandbox/fiscal_review.md
+
+requirements_audit_task:
+  description: >
+    Audita el sistema entregado frente a los requisitos. Construye la matriz de trazabilidad, con una fila por requisito.
+    Estos son los requisitos: {requirements}
+  expected_output: >
+    Un informe en markdown, en español, con la matriz (requisito, evidencia, estado cubierto/parcial/ausente) y, al principio,
+    la lista de requisitos parciales o ausentes indicando exactamente qué falta.
+  agent: requirements_auditor
+  context:
+    - design_task
+    - code_task
+    - frontend_task
+  output_file: sandbox/requirements_audit.md
+
+review_decision_task:
+  description: >
+    Tienes tres revisiones independientes del sistema: UX, fiscal/IVA y cobertura de requisitos. Decide qué se hace.
+    Lee app.py o el backend si lo necesitas para valorar la viabilidad. Para cada hallazgo, ACÉPTALO o RECHÁZALO con una razón de una línea,
+    dando prioridad a los cambios que importan al usuario final o corrigen errores reales, y rechazando cuestiones de gusto, trivialidades
+    y todo lo que arriesgue romper código que funciona. Acepta como máximo 12 cambios en total. Asigna cada cambio aceptado a backend_engineer o
+    frontend_engineer. Los cambios de backend no deben alterar firmas públicas de métodos usadas por app.py, salvo que el cambio incluya también
+    la actualización de frontend correspondiente. No escribas código.
+  expected_output: >
+    Un documento en markdown, en español, con dos secciones: "Aceptados" (id, revisión de origen, cambio, responsable, cómo verificarlo) y
+    "Rechazados" (id, revisión de origen, motivo).
+  agent: engineering_lead
+  context:
+    - ux_review_task
+    - fiscal_review_task
+    - requirements_audit_task
+  output_file: sandbox/review_decision.md
+
+backend_fix_task:
+  description: >
+    Aplica ÚNICAMENTE los cambios asignados a backend_engineer en la decisión de revisión del líder de ingeniería. No toques nada más.
+    Después de cada cambio, vuelve a ejecutar las comprobaciones existentes (las pruebas unitarias si existen; si no, un script rápido) y asegúrate de que
+    app.py sigue funcionando con el backend.
+    Si no hay cambios de backend, no hagas nada y indícalo.
+  expected_output: >
+    Una lista breve de los cambios de backend aplicados y el resultado de las comprobaciones que se volvieron a ejecutar. Usa tus herramientas del sandbox.
+  agent: backend_engineer
+  context:
+    - review_decision_task
+    - code_task
+
+ux_revision_task:
+  description: >
+    Aplica ÚNICAMENTE los cambios asignados a frontend_engineer en la decisión de revisión del líder de ingeniería, además de cualquier actualización
+    de frontend que requieran los cambios de backend. No toques nada más. Mantén la paleta de colores y el comportamiento en modo claro/oscuro.
+    Después vuelve a ejecutar el script de validación (_validate.py) con tus herramientas del sandbox; NO debe llamar a `.launch()`.
+    Mantén app.py exponiendo un `demo` a nivel de módulo y lanzándolo únicamente bajo `if __name__ == "__main__"`.
+    Estos son los requisitos: {requirements}
+  expected_output: >
+    Una lista breve de los cambios de frontend aplicados y el resultado correcto del script de validación.
+  agent: frontend_engineer
+  context:
+    - review_decision_task
+    - backend_fix_task
+    - frontend_task
+
 test_task:
   description: >
-    Write unit tests for the backend module, in a single test file, using the stdlib `unittest` module.
-    Do not write tests for app.py (the gradio frontend).
-    Fix any errors in the backend code so that the unit tests pass.
-    Keep working until all unit tests pass.
-    If you change any backend code, ensure that the unit tests pass and that the gradio app in app.py will still work.
-    Avoid making any changes that might break the gradio app in app.py.
+    Escribe pruebas unitarias del módulo de backend, en un único archivo de pruebas, usando el módulo `unittest` de la biblioteca estándar.
+    No escribas pruebas para app.py (el frontend de gradio).
+    Corrige cualquier error del código del backend para que las pruebas unitarias pasen.
+    Sigue trabajando hasta que todas las pruebas unitarias pasen.
+    Si cambias código del backend, asegúrate de que las pruebas unitarias pasan y de que la aplicación gradio de app.py seguirá funcionando.
+    Evita hacer cambios que puedan romper la aplicación gradio de app.py.
   expected_output: >
-    A single test file that can be run to test the backend module.
-    IMPORTANT: Use your sandbox tools to write and run the unit tests.
-    Output a summary of the results of the unit tests.
+    Un único archivo de pruebas que se pueda ejecutar para probar el módulo de backend.
+    IMPORTANTE: Usa tus herramientas del sandbox para escribir y ejecutar las pruebas unitarias.
+    Entrega un resumen de los resultados de las pruebas unitarias.
   agent: test_engineer
   context:
     - code_task
     - design_task
   output_file: sandbox/test_summary.md
+
+manual_task:
+  description: >
+    Escribe el manual de usuario de la aplicación terminada, en español, basado en lo que la interfaz y el código contienen realmente.
+    Cita exactamente los nombres de pestañas, botones y etiquetas de campos. Confírmalos con inspect_gradio_layout antes de escribir.
+  expected_output: >
+    Un manual de usuario en markdown, en español: introducción y cómo iniciar la aplicación, una sección por pestaña con pasos numerados para
+    cada tarea, errores habituales y soluciones, y un glosario. Todo lo que no se haya podido confirmar queda señalado como tal.
+  agent: manual_writer
+  context:
+    - design_task
+    - review_decision_task
+    - test_task
+  output_file: sandbox/manual_usuario.md
+
+cost_report_task:
+  description: >
+    Mide el gasto real de esta ejecución y redacta un informe del coste total.
+    Llama a la herramienta Report Token Usage: te da los tokens reales por agente y en total, y el coste estimado con las
+    tarifas de config/tarifas.yaml. Usa ÚNICAMENTE las cifras que devuelva la herramienta; no calcules ni inventes precios ni tokens.
+    Si algún modelo aparece como "sin tarifa", dilo claramente y no estimes su coste.
+    La herramienta también da el tiempo de reloj: por tarea, por agente y total. Incluye ese tiempo en el informe, con las mismas
+    reglas: solo las cifras de la herramienta, sin estimar nada por tu cuenta.
+  expected_output: >
+    Un informe en markdown, en español: tabla de tokens y coste por agente y total (copiada de la herramienta), qué agentes o
+    modelos concentran el gasto y en qué porcentaje, el tiempo total de la ejecución y la tabla de tiempo por tarea y por agente
+    (qué tareas o agentes concentran más tiempo), qué falta por contabilizar (tarifas sin rellenar, llamadas posteriores a
+    la medición) y una advertencia de que es una estimación y no la factura de Console.
+  agent: engineering_lead
+  context:
+    - manual_task
+  output_file: sandbox/informe_coste.md

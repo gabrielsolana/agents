@@ -1,5 +1,6 @@
 from crewai.tools import tool
 from pathlib import Path
+import base64
 import shutil
 import subprocess
 
@@ -17,7 +18,7 @@ def reset_sandbox() -> None:
         shutil.rmtree(SANDBOX_DIR)
     SANDBOX_DIR.mkdir(parents=True)
 
-    subprocess.run(["uv", "init", "--bare", "--python", "3.13"], cwd=SANDBOX_DIR, check=True)
+    subprocess.run(["uv", "init", "--bare", "--no-workspace", "--python", "3.13"], cwd=SANDBOX_DIR, check=True)
     subprocess.run(["uv", "add", "gradio"], cwd=SANDBOX_DIR, check=True)
 
 def _safe_path(filename: str) -> Path:
@@ -83,6 +84,19 @@ def write_sandbox_file(filename: str, content: str) -> str:
     return f"Wrote {len(content)} characters to {filename}."
 
 
+def _docker_uv_run(*uv_run_args: str) -> list[str]:
+    """Build the `docker run ... uv run <args>` command that executes code in the sandbox."""
+    return [
+        "docker", "run", "--rm",
+        "-v", f"{SANDBOX_DIR}:/workspace",
+        "-w", "/workspace",
+        # Keep the Linux venv inside the container, out of the host-mounted sandbox.
+        "-e", "UV_PROJECT_ENVIRONMENT=/tmp/venv",
+        "ghcr.io/astral-sh/uv:python3.13-bookworm-slim",
+        "uv", "run", *uv_run_args,
+    ]
+
+
 @tool("Run Sandbox Python File")
 def run_sandbox_python(filename: str) -> str:
     """
@@ -102,17 +116,11 @@ def run_sandbox_python(filename: str) -> str:
     """
     try:
         result = subprocess.run(
-            [
-                "docker", "run", "--rm",
-                "-v", f"{SANDBOX_DIR}:/workspace",
-                "-w", "/workspace",
-                # Keep the Linux venv inside the container, out of the host-mounted sandbox.
-                "-e", "UV_PROJECT_ENVIRONMENT=/tmp/venv",
-                "ghcr.io/astral-sh/uv:python3.13-bookworm-slim",
-                "uv", "run", filename,
-            ],
+            _docker_uv_run(filename),
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=300,
         )
         return (
@@ -129,7 +137,73 @@ def run_sandbox_python(filename: str) -> str:
             f"--- stderr so far ---\n{stderr or '(empty)'}"
         )
 
+# Fixed script (never editable by agents) that dumps the Gradio component tree of
+# sandbox/app.py. It is shipped to the container base64-encoded to avoid quoting issues.
+_LAYOUT_SCRIPT = r"""
+import sys
+sys.path.insert(0, ".")
+import app
+
+demo = getattr(app, "demo", None)
+if demo is None:
+    sys.exit("app.py does not expose a module-level `demo` (gr.Blocks).")
+
+def short(v, n=60):
+    v = " ".join(str(v).split())
+    return v if len(v) <= n else v[:n] + "..."
+
+def walk(block, depth):
+    kind = type(block).__name__
+    info = []
+    for attr in ("label", "value", "scale", "min_width", "visible", "open", "variant"):
+        v = getattr(block, attr, None)
+        if v is None or v == "":
+            continue
+        if attr == "value" and kind not in ("Button", "Markdown", "HTML", "Textbox", "Number", "Dropdown"):
+            continue
+        if attr == "visible" and v is True:
+            continue
+        info.append(f"{attr}={short(v)!r}" if isinstance(v, str) else f"{attr}={v}")
+    print("  " * depth + kind + (" [" + ", ".join(info) + "]" if info else ""))
+    for child in getattr(block, "children", None) or []:
+        walk(child, depth + 1)
+
+walk(demo, 0)
+"""
+
+
+@tool("Inspect Gradio Layout")
+def inspect_gradio_layout() -> str:
+    """
+    Print the component tree of the Gradio app in the sandbox (app.py, which must
+    expose a module-level `demo`): tabs, rows, columns, accordions, tables, buttons,
+    with their labels, relative sizes (scale / min_width) and visibility.
+    Use it to judge the layout (what is central, what sits behind a button, how many
+    elements compete for the screen) without launching the app.
+
+    Returns:
+        The indented component tree, or the error if app.py cannot be imported.
+    """
+    code = base64.b64encode(_LAYOUT_SCRIPT.encode()).decode()
+    try:
+        result = subprocess.run(
+            _docker_uv_run("python", "-c", f"import base64;exec(base64.b64decode('{code}'))"),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=300,
+        )
+    except subprocess.TimeoutExpired:
+        return "Inspecting the layout timed out after 300 seconds."
+    if result.returncode != 0:
+        return f"Could not inspect the layout (exit {result.returncode}).\n{result.stderr or result.stdout}"
+    return result.stdout or "(empty layout)"
+
+
 sandbox_tools = [list_sandbox_files, read_sandbox_file, write_sandbox_file, run_sandbox_python]
+# Read-only view of the sandbox (+ layout inspection) for reviewers and the manual writer.
+ux_tools = [list_sandbox_files, read_sandbox_file, inspect_gradio_layout]
 
 
 def _never_cache(*_args, **_kwargs) -> bool:
@@ -138,5 +212,5 @@ def _never_cache(*_args, **_kwargs) -> bool:
 
 # Sandbox state changes between calls (files appear/change/run), so caching tool
 # results would feed agents stale data. Opt out of CrewAI's default tool caching.
-for _t in sandbox_tools:
+for _t in sandbox_tools + [inspect_gradio_layout]:
     _t.cache_function = _never_cache
