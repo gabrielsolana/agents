@@ -27,8 +27,8 @@ MAX_LISTED_FILES = 500
 MAX_OUTLINE_LINES = 400
 MAX_SEARCH_HITS = 60
 SEARCHABLE_SUFFIXES = {".py", ".md", ".txt", ".toml", ".json", ".yaml", ".yml", ".csv"}
-_SKIPPED_DIRS = {".venv", "__pycache__"}
-_NOT_WORTH_BACKING_UP = PROTECTED_FILES | {".venv", "__pycache__"}
+_SKIPPED_DIRS = {".venv", "__pycache__", ".git"}
+_NOT_WORTH_BACKING_UP = PROTECTED_FILES | {".venv", "__pycache__", ".git"}
 
 
 def backup_sandbox() -> Path | None:
@@ -41,7 +41,7 @@ def backup_sandbox() -> Path | None:
     if not SANDBOX_DIR.exists() or not any(p.name not in _NOT_WORTH_BACKING_UP for p in SANDBOX_DIR.iterdir()):
         return None
     dest = BACKUP_DIR / datetime.now().strftime("%Y%m%d-%H%M%S")
-    shutil.copytree(SANDBOX_DIR, dest, ignore=shutil.ignore_patterns(".venv", "__pycache__"))
+    shutil.copytree(SANDBOX_DIR, dest, ignore=shutil.ignore_patterns(".venv", "__pycache__", ".git"))
     for old in sorted(p for p in BACKUP_DIR.iterdir() if p.is_dir())[:-KEEP_BACKUPS]:
         shutil.rmtree(old)
     return dest
@@ -49,6 +49,11 @@ def backup_sandbox() -> Path | None:
 
 def reset_sandbox() -> None:
     """Back up, then wipe the sandbox and re-initialize it as a fresh uv project with gradio."""
+    if (SANDBOX_DIR / ".git").exists():
+        raise RuntimeError(
+            "El sandbox es un repositorio git: run_crew lo borraría entero, historial incluido. "
+            "Usa change, apply_review o review_code, que trabajan sobre la app existente."
+        )
     backup = backup_sandbox()
     if backup:
         print(f"Sandbox anterior guardado en: {backup}")
@@ -112,6 +117,8 @@ def _safe_path(filename: str, for_write: bool = False) -> Path:
         raise ValueError(f"Path escapes the sandbox: {filename}")
     if p.parent == base and p.name.lower() in PROTECTED_FILES:
         raise ValueError(f"Protected file, not accessible: {filename}")
+    if ".git" in p.relative_to(base).parts:
+        raise ValueError(f"The .git folder is not accessible: {filename}")
     if for_write and p.parent == base and p.name.startswith("_") and p.suffix == ".py":
         raise ValueError(f"Auxiliary scripts (names starting with an underscore) go in scripts/, not in the sandbox root: {filename}")
     if for_write and p.relative_to(base).as_posix().lower() in RELEASE_FILES:
